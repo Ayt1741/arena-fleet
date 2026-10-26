@@ -119,6 +119,20 @@ def push(title, text, click=None, priority='urgent'):
         log({'event': 'notify_fail', 'err': str(e)[:100]})
 
 
+def state_from_env():
+    """Полное состояние входа (storage_state: cookie + cf_clearance) — надёжнее одной cookie."""
+    import base64 as _b64
+    raw = os.environ.get('ARENA_STATE', '').strip()
+    if not raw:
+        return None
+    try:
+        data = _b64.b64decode(raw)
+        pathlib.Path('state.json').write_bytes(data)
+        return 'state.json'
+    except Exception:
+        return None
+
+
 def cookies_from_env():
     raw = os.environ.get('ARENA_COOKIE', '').strip()
     if not raw:
@@ -158,12 +172,15 @@ async def main():
         b = await p.chromium.launch(headless=True, args=[
             '--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled',
             '--disable-features=IsolateOrigins,site-per-process'])
+        st = state_from_env()
         ctx = await b.new_context(user_agent=ua, locale='ru-RU', timezone_id=tz,
                                   viewport={'width': random.choice([1366, 1440, 1536]),
-                                            'height': random.choice([768, 864, 900])})
+                                            'height': random.choice([768, 864, 900])},
+                                  **({'storage_state': st} if st else {}))
         await ctx.add_init_script(STEALTH % (random.choice([4, 8, 12]), random.choice([8, 16]),
                                             random.randint(1, 250)))
-        await ctx.add_cookies(ck)
+        if not st:
+            await ctx.add_cookies(ck)
         pg = await ctx.new_page()
         await pg.goto('https://arena.ai/text', wait_until='domcontentloaded', timeout=90000)
         await pg.wait_for_timeout(5000)
@@ -223,11 +240,14 @@ async def main():
                 await pg.wait_for_timeout(random.randint(180, 300) * 1000)
         # сохраняем обновлённую сервером cookie: сессия «поворачивается», старая пара умирает
         try:
+            import base64 as _b64
+            await ctx.storage_state(path='state-%s.json' % TAG)
+            raw = pathlib.Path('state-%s.json' % TAG).read_bytes()
+            pathlib.Path('cookies-%s.txt' % TAG).write_text(_b64.b64encode(raw).decode())
             live = [c for c in await ctx.cookies() if c['name'].startswith('arena-auth-prod-v1')]
-            if live:
-                val = ''.join(c['value'] for c in sorted(live, key=lambda x: x['name']))
-                pathlib.Path('cookies-%s.txt' % TAG).write_text(val)
-                log({'event': 'cookie_saved', 'len': len(val), 'note': 'взять из артефакта, если нужен повтор'})
+            log({'event': 'state_saved', 'file': 'cookies-%s.txt' % TAG,
+                 'note': 'это base64 полного состояния входа — вставлять в секрет ARENA_STATE',
+                 'cookies_n': len(live)})
         except Exception:
             pass
         log({'event': 'finish', 'made': made})
