@@ -42,8 +42,21 @@ CAPTCHA_WAIT = int(os.environ.get('CAPTCHA_WAIT', '300'))
 DRY = os.environ.get('DRY', '0') == '1'
 OUT = pathlib.Path('result-%s.jsonl' % TAG)
 
-_roots = ['/root/.cache/ms-playwright', '/home/user/.cache/ms-playwright']
-if not any(list(pathlib.Path(r).glob('chromium-*/chrome-linux*/chrome')) for r in _roots):
+
+
+def _has_chrome():
+    roots = ['/root/.cache/ms-playwright', os.path.expanduser('~/.cache/ms-playwright')]
+    for r in roots:
+        d = pathlib.Path(r)
+        try:
+            if d.is_dir() and list(d.glob('chromium-*/chrome-linux*/chrome')):
+                return True
+        except Exception:
+            continue
+    return False
+
+
+if not _has_chrome():
     subprocess.run([sys.executable, '-m', 'playwright', 'install', '--with-deps', 'chromium'], check=False)
 
 from playwright.async_api import async_playwright
