@@ -126,8 +126,14 @@ def state_from_env():
     if not raw:
         return None
     try:
+        import gzip as _gz
         data = _b64.b64decode(raw)
+        try:
+            data = _gz.decompress(data)          # состояние лежит сжатым
+        except Exception:
+            pass
         pathlib.Path('state.json').write_bytes(data)
+        json.loads(data.decode())                # проверка, что это валидный JSON
         return 'state.json'
     except Exception:
         return None
