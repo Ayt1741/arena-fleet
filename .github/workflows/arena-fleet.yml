@@ -1,0 +1,52 @@
+name: arena-fleet
+# 20 виртуальных машин GitHub = 20 разных внешних IP.
+# Каждая машина: свой аккаунт (или свой шард), свои бои, уведомления со ссылкой на диалог.
+on:
+  workflow_dispatch:
+    inputs:
+      goal:   {description: 'боёв на машину', default: '12'}
+      pause:  {description: 'пауза между боями, с', default: '120'}
+      prompt: {description: 'текст задания', default: 'По документу: перечисли 5 этапов внедрения, коротко и по делу.'}
+      dry:    {description: '1 = только проверка входа, без боёв', default: '0'}
+      shards: {description: 'какие машины запускать: "1" или "1,2,3" или "1,2,...,20"', default: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20'}
+
+jobs:
+  battle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        shard: ${{ fromJSON(format('[{0}]', github.event.inputs.shards)) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+
+      - name: Установка браузера
+        run: |
+          pip install playwright==1.64.1
+          python -m playwright install --with-deps chromium
+
+      - name: Бои
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ARENA_COOKIE: ${{ secrets[format('COOKIE_{0}', matrix.shard)] || secrets.ARENA_COOKIE }}
+          ACCOUNT: ${{ secrets[format('ACCOUNT_{0}', matrix.shard)] || format('acc-{0}', matrix.shard) }}
+          TAG: ${{ format('S{0}', matrix.shard) }}
+          GOAL: ${{ github.event.inputs.goal }}
+          PAUSE: ${{ github.event.inputs.pause }}
+          PROMPT: ${{ github.event.inputs.prompt }}
+          DRY: ${{ github.event.inputs.dry }}
+        run: python fleet/worker.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: result-${{ matrix.shard }}
+          path: |
+            result-*.jsonl
+            cookies-*.txt
+          if-no-files-found: ignore
