@@ -33,6 +33,7 @@ jobs:
       - name: Бои
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ARENA_STATE: ${{ secrets[format('STATE_{0}', matrix.shard)] || secrets.ARENA_STATE }}
           ARENA_COOKIE: ${{ secrets[format('COOKIE_{0}', matrix.shard)] || secrets.ARENA_COOKIE }}
           ACCOUNT: ${{ secrets[format('ACCOUNT_{0}', matrix.shard)] || format('acc-{0}', matrix.shard) }}
           TAG: ${{ format('S{0}', matrix.shard) }}
