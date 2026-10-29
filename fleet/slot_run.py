@@ -15,7 +15,7 @@ UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
 SLOT = int(os.environ.get('SLOT', '0'))
 PAIR = os.environ.get('A%02d' % SLOT, '') or ''
 TG_TOKEN = os.environ.get('TG_TOKEN', '')
-MEMORY_FILE_ID = os.environ.get('MEMORY_FILE_ID', '')
+MEMORY_PARTS = os.environ.get('MEMORY_PARTS', '')
 TASK = os.environ.get('TASK', 'что уже сделано по проекту')
 TG_CHAT = os.environ.get('TG_CHAT', '7023156818')
 
@@ -67,21 +67,23 @@ def token_from(cookies):
 
 
 def memory_ping(text):
-    """Спросить общую память: что уже известно по теме. Возвращает строку отчёта."""
-    if not (TG_TOKEN and MEMORY_FILE_ID):
+    """Спросить общую память: скачать базу из бота частями и найти по теме."""
+    parts = [x for x in os.environ.get('MEMORY_PARTS', '').split(',') if x.strip()]
+    if not (TG_TOKEN and parts):
         return 'память: не подключена'
     try:
-        info = json.loads(urllib.request.urlopen(
-            'https://api.telegram.org/bot%s/getFile?file_id=%s' % (TG_TOKEN, MEMORY_FILE_ID), timeout=120).read().decode())
-        path = info['result']['file_path']
-        data = urllib.request.urlopen('https://api.telegram.org/file/bot%s/%s' % (TG_TOKEN, path), timeout=600).read()
-        zf = zipfile.ZipFile(io.BytesIO(data))
-        zf.extract('memory.db', path='/tmp/memdb') if os.path.isdir('/tmp/memdb') else os.makedirs('/tmp/memdb', exist_ok=True)
-        if not os.path.exists('/tmp/memdb/memory.db'):
+        buf = b''
+        for fid in parts:
+            info = json.loads(urllib.request.urlopen(
+                'https://api.telegram.org/bot%s/getFile?file_id=%s' % (TG_TOKEN, fid.strip()), timeout=180).read().decode())
+            path = info['result']['file_path']
+            buf += urllib.request.urlopen('https://api.telegram.org/file/bot%s/%s' % (TG_TOKEN, path), timeout=600).read()
+        os.makedirs('/tmp/memdb', exist_ok=True)
+        with zipfile.ZipFile(io.BytesIO(buf)) as zf:
             zf.extract('memory.db', path='/tmp/memdb')
         c = sqlite3.connect('/tmp/memdb/memory.db')
         total, = c.execute('SELECT count(*) FROM fts').fetchone()
-        words = [w for w in re.findall(r'[\wа-яё]{3,}', text.lower())][:8]
+        words = re.findall(r'[\wа-яё]{3,}', text.lower())[:8]
         hits = []
         if words:
             q = ' OR '.join('"%s"' % w for w in words)
@@ -90,10 +92,10 @@ def memory_ping(text):
             except Exception:
                 pass
         c.close()
-        top = '; '.join(h[0][:60] for h in hits) or 'ничего не нашлось'
+        top = '; '.join(h[0][:55] for h in hits) or 'ничего не нашлось'
         return 'память: %d записей | по теме: %s' % (total, top)
     except Exception as e:
-        return 'память: сбой (%s)' % str(e)[:60]
+        return 'память: сбой (%s)' % str(e)[:70]
 
 
 def main():
