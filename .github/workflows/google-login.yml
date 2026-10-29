@@ -22,7 +22,7 @@ jobs:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
           GOOGLE_ACC: ${{ secrets.GOOGLE_ACC }}
-        run: xvfb-run -a --server-args="-screen 0 1400x900x24" python3 google_login.py
+        run: xvfb-run -a --server-args="-screen 0 1400x900x24" python3 fleet/google_login.py
       - name: Скриншоты и сессия
         if: always()
         uses: actions/upload-artifact@v4
