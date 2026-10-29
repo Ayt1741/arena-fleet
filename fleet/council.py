@@ -85,6 +85,19 @@ def sign_in(email, password):
     return js.get('access_token', ''), cookies, payload
 
 
+def accept_terms(token):
+    """Согласие с правилами Арены через их же API: без модалки в браузере отправка не идёт."""
+    r = urllib.request.Request('https://arena.ai/api/me/update-tou-consent', data=b'{}', method='POST')
+    for k, v in {'authorization': 'Bearer ' + token, 'content-type': 'application/json', 'user-agent': UA,
+                 'origin': 'https://arena.ai', 'referer': 'https://arena.ai/text'}.items():
+        r.add_header(k, v)
+    try:
+        with urllib.request.urlopen(r, timeout=40) as x:
+            return x.status, x.read().decode()[:120]
+    except Exception as e:
+        return 0, str(e)[:100]
+
+
 def prompt_for(slot, leader):
     head = TASK.strip() or ('Как сделать так, чтобы ИИ-агент никогда не забывал законы заказчика и живые факты? '
                             'Нужны инженерные меры и машинные проверки.')
@@ -105,8 +118,10 @@ async def main():
     log({'event': 'start', 'slot': SLOT, 'account': '%02d' % ACC, 'leader': leader, 'goal': GOAL})
     token, cookies, payload = sign_in(EMAIL, PASS)
     log({'event': 'sign_in', 'user': (payload.get('user') or {}).get('email'), 'token': len(token)})
+    log({'event': 'terms_api', 'result': accept_terms(token)})
     async with async_playwright() as p:
-        b = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage',
+        headless = os.environ.get('HEADLESS', '1') != '0'
+        b = await p.chromium.launch(headless=headless, args=['--no-sandbox', '--disable-dev-shm-usage',
                                                          '--disable-blink-features=AutomationControlled'])
         ctx = await b.new_context(locale='en-US', timezone_id='Europe/Moscow', user_agent=UA,
                                   viewport={'width': random.choice([1366, 1400, 1440]),
