@@ -26,7 +26,7 @@ jobs:
           SLOT: ${{ matrix.slot }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
-          MEMORY_FILE_ID: ${{ secrets.MEMORY_FILE_ID }}
+          MEMORY_PARTS: ${{ secrets.MEMORY_PARTS }}
           TASK: ${{ github.event.inputs.task }}
           A01: ${{ secrets.ARENA_ACC_01 }}
           A02: ${{ secrets.ARENA_ACC_02 }}
