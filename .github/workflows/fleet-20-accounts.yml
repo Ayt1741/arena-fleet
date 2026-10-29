@@ -46,7 +46,7 @@ jobs:
           A18: ${{ secrets.ARENA_ACC_18 }}
           A19: ${{ secrets.ARENA_ACC_19 }}
           A20: ${{ secrets.ARENA_ACC_20 }}
-        run: python3 slot_run.py
+        run: python3 fleet/slot_run.py
 
       - name: Сохранить сессию машины
         if: always()
