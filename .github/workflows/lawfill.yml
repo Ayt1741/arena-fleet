@@ -1,0 +1,22 @@
+name: lawfill-council
+on:
+  workflow_dispatch:
+jobs:
+  fill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Совет 10 руководителей, 30 ответов, проверка
+        run: python3 fleet/lawfill.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lawfill-out
+          path: |
+            state/leaders/*.md
+            state/battle/*.jsonl
+            battle-tasks/*.txt
+            REPORT-01.md
