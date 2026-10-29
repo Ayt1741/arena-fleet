@@ -1,0 +1,17 @@
+name: lawguard
+# Сторож законов: красная сборка, если законы/цифры/секреты/синтаксис нарушены.
+on:
+  push:
+    branches: [main]
+    paths: ['память/**']
+  pull_request:
+  workflow_dispatch:
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Проверка законов
+        run: python3 память/lawguard.py
