@@ -13,7 +13,8 @@ import zipfile
 UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
       '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
 SLOT = int(os.environ.get('SLOT', '0'))
-PAIR = os.environ.get('A%02d' % SLOT, '') or ''
+ACC = ((SLOT - 1) % 10) + 1          # 2 машины на каждый из 10 аккаунтов
+PAIR = os.environ.get('A%02d' % ACC, '') or ''
 TG_TOKEN = os.environ.get('TG_TOKEN', '')
 MEMORY_PARTS = os.environ.get('MEMORY_PARTS', '')
 TASK = os.environ.get('TASK', 'что уже сделано по проекту')
@@ -108,7 +109,7 @@ def main():
         except Exception:
             pass
     if not PAIR:
-        line = 'машина %02d | IP %s | аккаунт не задан (нет секрета ARENA_ACC_%02d)' % (SLOT, ip or '?', SLOT)
+        line = 'машина %02d | IP %s | аккаунт №%02d не задан (нет секрета ARENA_ACC_%02d)' % (SLOT, ip or '?', ACC, ACC)
         print(line)
         tg(line)
         return
@@ -131,7 +132,7 @@ def main():
     with open('slot-%02d.json' % SLOT, 'w', encoding='utf-8') as f:
         json.dump(state, f, ensure_ascii=False)
     mem = memory_ping(TASK)
-    line = 'машина %02d | IP %s | %s | вход %s | /api/me %s | %s' % (SLOT, ip or '?', email, st, me_code, mem)
+    line = 'машина %02d | аккаунт №%02d | IP %s | %s | вход %s | /api/me %s | %s' % (SLOT, ACC, ip or '?', email, st, me_code, mem)
     print(line)
     tg(line)
 
