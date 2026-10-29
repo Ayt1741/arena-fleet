@@ -1,0 +1,44 @@
+name: council-arena
+# Совет на LM Arena: 10 аккаунтов = 10 руководителей, по 2 машины на аккаунт.
+on:
+  workflow_dispatch:
+    inputs:
+      goal:
+        description: 'сколько заданий с каждой машины'
+        default: '1'
+      task:
+        description: 'задание совету'
+        default: ''
+jobs:
+  council:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        slot: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Браузер
+        run: |
+          pip install -q playwright
+          python -m playwright install --with-deps chromium
+      - name: Совет
+        env:
+          SLOT: ${{ matrix.slot }}
+          GOAL: ${{ github.event.inputs.goal }}
+          TASK: ${{ github.event.inputs.task }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          ARENA_EMAIL: ${{ secrets[format('ACC{0}_EMAIL', matrix.slot)] }}
+          ARENA_PASS: ${{ secrets[format('ACC{0}_PASS', matrix.slot)] }}
+        run: python3 fleet/council.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: council-${{ matrix.slot }}
+          path: council-*.json
+          if-no-files-found: ignore
