@@ -71,8 +71,9 @@ def main():
         except Exception:
             pass
     if not PAIR:
-        tg('машина %02d: аккаунт не задан (нет секрета ARENA_ACC_%02d)' % (SLOT, SLOT))
-        print('нет аккаунта')
+        line = 'машина %02d | IP %s | аккаунт не задан (нет секрета ARENA_ACC_%02d)' % (SLOT, ip or '?', SLOT)
+        print(line)
+        tg(line)
         return
     email, _, pwd = PAIR.partition(':')
     st, body, cookies = post_json('https://arena.ai/nextjs-api/sign-in/email',
