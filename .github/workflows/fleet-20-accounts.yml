@@ -1,0 +1,57 @@
+name: fleet-20-accounts
+# 20 машин = 20 разных внешних IP. Каждая машина входит СВОИМ аккаунтом.
+# Никакого общего cookie: у каждого раннера свой IP и свой аккаунт.
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'что делать (check = только вход и проверка)'
+        default: 'check'
+
+jobs:
+  slot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        slot: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Вход своим аккаунтом со своего IP
+        env:
+          SLOT: ${{ matrix.slot }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          A01: ${{ secrets.ARENA_ACC_01 }}
+          A02: ${{ secrets.ARENA_ACC_02 }}
+          A03: ${{ secrets.ARENA_ACC_03 }}
+          A04: ${{ secrets.ARENA_ACC_04 }}
+          A05: ${{ secrets.ARENA_ACC_05 }}
+          A06: ${{ secrets.ARENA_ACC_06 }}
+          A07: ${{ secrets.ARENA_ACC_07 }}
+          A08: ${{ secrets.ARENA_ACC_08 }}
+          A09: ${{ secrets.ARENA_ACC_09 }}
+          A10: ${{ secrets.ARENA_ACC_10 }}
+          A11: ${{ secrets.ARENA_ACC_11 }}
+          A12: ${{ secrets.ARENA_ACC_12 }}
+          A13: ${{ secrets.ARENA_ACC_13 }}
+          A14: ${{ secrets.ARENA_ACC_14 }}
+          A15: ${{ secrets.ARENA_ACC_15 }}
+          A16: ${{ secrets.ARENA_ACC_16 }}
+          A17: ${{ secrets.ARENA_ACC_17 }}
+          A18: ${{ secrets.ARENA_ACC_18 }}
+          A19: ${{ secrets.ARENA_ACC_19 }}
+          A20: ${{ secrets.ARENA_ACC_20 }}
+        run: python3 slot_run.py
+
+      - name: Сохранить сессию машины
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slot-${{ matrix.slot }}
+          path: slot-${{ matrix.slot }}.json
+          if-no-files-found: ignore
