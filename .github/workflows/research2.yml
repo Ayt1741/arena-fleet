@@ -1,0 +1,28 @@
+name: research-memory-2
+on:
+  workflow_dispatch:
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        slot: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Исследование
+        env:
+          SLOT: ${{ matrix.slot }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+        run: python3 fleet/research_slot2.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-${{ matrix.slot }}
+          path: research2-${{ matrix.slot }}.json
+          if-no-files-found: ignore
