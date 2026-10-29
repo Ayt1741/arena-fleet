@@ -1,0 +1,56 @@
+[
+ {
+  "n": 1,
+  "email": "la-la-lv-lv@inbox.ru",
+  "pass": "MeetMeAfterLunch49!",
+  "status": "вход 200"
+ },
+ {
+  "n": 2,
+  "email": "skn71@inbox.ru",
+  "pass": "FiveMoreMinutes86%",
+  "status": "вход 200"
+ },
+ {
+  "n": 3,
+  "email": "ilya.dubrovskiy.10@bk.ru",
+  "pass": "RainySundayMorning58!`",
+  "status": "вход 200"
+ },
+ {
+  "n": 4,
+  "email": "2244452@bk.ru",
+  "pass": "NotBeforeCoffee624@",
+  "status": "вход 200"
+ },
+ {
+  "n": 5,
+  "email": "dovlatov.98@list.ru",
+  "pass": "PizzaAfterMidnight9@",
+  "status": "вход 200"
+ },
+ {
+  "n": 6,
+  "email": "sanya.dovlatov.98@mail.ru",
+  "pass": "ForgotMyCoffee27!",
+  "status": "вход 200, /api/me 200 (проверено 30.10)"
+ },
+ {
+  "n": 7,
+  "email": "mira-dubrovskaya@mail.ru",
+  "pass": "MyDogStoleMySocks42!",
+  "status": "вход 200"
+ },
+ {
+  "n": 8,
+  "email": "dovlatov.98@inbox.ru",
+  "pass": "JustOneMoreEpisode8#",
+  "status": "вход 200"
+ },
+ {
+  "n": 9,
+  "email": "ilya.dubrovskiy.10@mail.ru",
+  "pass": "Question-infinitive",
+  "status": "вход 200, /api/me 200 (проверено 30.10)"
+ }
+]
