@@ -1,0 +1,35 @@
+name: google-login-real-machine
+# Вход в Arena через Google в РЕАЛЬНОМ (не headless) браузере на машине GitHub.
+# Каждый шаг присылает скриншот в Telegram.
+on:
+  workflow_dispatch:
+jobs:
+  login:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Экран и библиотеки
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
+            libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            libgbm1 libasound2t64 libpango-1.0-0 libcairo2 fonts-liberation
+          pip install --quiet playwright
+          python -m playwright install chromium
+      - name: Вход через Google
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          GOOGLE_ACC: ${{ secrets.GOOGLE_ACC }}
+        run: xvfb-run -a --server-args="-screen 0 1400x900x24" python3 google_login.py
+      - name: Скриншоты и сессия
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: google-login-shots
+          path: |
+            shots/*.png
+            /tmp/google_state.json
+            /tmp/login-shots.zip
+          if-no-files-found: ignore
