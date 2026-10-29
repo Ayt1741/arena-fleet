@@ -2,7 +2,17 @@
 chcp 65001 >nul
 set PYTHONIOENCODING=utf-8
 cd /d "%~dp0"
-where py >nul 2>nul && (py -3 MEMORY.py %* & goto :eof)
-where python >nul 2>nul && (python MEMORY.py %* & goto :eof)
-echo Python не найден. Установите Python 3 с python.org и запустите снова.
-pause
+set "PY="
+where py >nul 2>nul
+if not errorlevel 1 set "PY=py -3"
+if not defined PY (
+  where python >nul 2>nul
+  if not errorlevel 1 set "PY=python"
+)
+if not defined PY (
+  echo Python не найден. Поставьте Python 3 с python.org и запустите снова.
+  pause
+  exit /b 1
+)
+%PY% MEMORY.py %*
+if errorlevel 1 pause
