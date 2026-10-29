@@ -502,6 +502,53 @@ def doctor():
     return 0 if not bad else 1
 
 
+
+def autosync(limit_mb=12):
+    """Всё, что появилось в памяти, само уезжает в бота — пачками, чтобы бот не отказал.
+    Что уже отправлено, помечаем номером записи: повторно не шлём."""
+    if not os.path.exists(DB):
+        return 'базы нет'
+    c = conn()
+    row = c.execute("select v from meta where k='synced_rowid'").fetchone()
+    last = int(row[0]) if row else 0
+    sent = batches = 0
+    while True:
+        rows = c.execute('select rowid, title, body, source, kind from fts where rowid > ? order by rowid limit 4000',
+                         (last,)).fetchall()
+        if not rows:
+            break
+        path = os.path.join(TEMP, 'журнал-%s.jsonl' % time.strftime('%Y%m%d-%H%M%S'))
+        size, n = 0, 0
+        with open(path, 'w', encoding='utf-8') as f:
+            for rec in rows:
+                line = json.dumps({'rowid': rec[0], 'title': rec[1], 'text': rec[2],
+                                   'source': rec[3], 'kind': rec[4]}, ensure_ascii=False) + '\n'
+                if size + len(line.encode()) > limit_mb * 1024 * 1024 and n:
+                    break
+                f.write(line)
+                size += len(line.encode())
+                n += 1
+                last = rec[0]
+        try:
+            tg_put(path, 'память: новые записи, пачка %d (%d записей)' % (batches + 1, n))
+        except Exception as e:
+            os.remove(path)
+            if '413' in str(e) and limit_mb > 2:
+                limit_mb //= 2                 # бот не принял объём — режем пачку и пробуем снова
+                continue
+            c.close()
+            return 'бот не принял: %s (отправлено до этого: %d)' % (str(e)[:60], sent)
+        os.remove(path)
+        c.execute("insert or replace into meta(k,v) values('synced_rowid',?)", (str(last),))
+        c.commit()
+        sent += n
+        batches += 1
+    c.close()
+    if not sent:
+        return 'нового нет (последняя отправленная запись %d)' % last
+    return 'отправлено в бота: %d записей, пачек %d' % (sent, batches)
+
+
 def selftest():
     """Доказывает, что цепочка работает: правила читаются, база открывается, поиск отвечает."""
     ok = []
@@ -533,6 +580,7 @@ def main():
         print('  ' + restore_state())
         print('  ' + ingest())
         print(stats())
+        print('  ' + autosync())
     elif cmd == 'search':
         print(search(' '.join(args[1:-1]) if len(args) > 2 and args[-1].isdigit() else ' '.join(args[1:]),
                       int(args[-1]) if len(args) > 2 and args[-1].isdigit() else 8))
@@ -556,6 +604,8 @@ def main():
         print(redact())
     elif cmd == 'doctor':
         sys.exit(doctor())
+    elif cmd == 'sync':
+        print(autosync())
     elif cmd == 'selftest':
         sys.exit(selftest())
     elif cmd == 'put':
