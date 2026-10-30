@@ -94,6 +94,28 @@ def найти(текст):
         return [{'ошибка': str(e)[:160]}]
 
 
+def спросить(вопрос, система='Отвечай по-русски, коротко и по делу.', адрес=None, модель=None):
+    """Спросить СВОЮ модель (локальный llama-server на 127.0.0.1:8080). 0 ₽ за токен."""
+    import json as _json
+    import urllib.request as _u
+    адрес = адрес or os.environ.get('ФЛОТ_ИИ', 'http://127.0.0.1:8080')
+    тело = {'messages': [{'role': 'system', 'content': система},
+                         {'role': 'user', 'content': вопрос}],
+            'max_tokens': 800, 'temperature': 0.3}
+    if модель:
+        тело['model'] = модель
+    r = _u.Request(адрес.rstrip('/') + '/v1/chat/completions',
+                   data=_json.dumps(тело).encode(), method='POST')
+    r.add_header('content-type', 'application/json')
+    try:
+        with _u.urlopen(r, timeout=600) as x:
+            d = _json.loads(x.read().decode())
+        return {'ответ': (d.get('choices') or [{}])[0].get('message', {}).get('content', '').strip(),
+                'модель': d.get('model'), 'адрес': адрес}
+    except Exception as e:
+        return {'ошибка': 'локальная модель не ответила: %s' % str(e)[:120], 'адрес': адрес}
+
+
 def сколько():
     try:
         return _хранилище().статистика()
