@@ -106,6 +106,10 @@ def _db():
         имя TEXT PRIMARY KEY, размер INTEGER, sha256 TEXT, частей INTEGER,
         file_ids TEXT, теги TEXT, время INTEGER, текст TEXT)''')
     c.execute('''CREATE VIRTUAL TABLE IF NOT EXISTS поиск USING fts5(имя, теги, текст)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS части(
+        sha TEXT PRIMARY KEY, file_id TEXT, размер INTEGER, время INTEGER)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS версии(
+        имя TEXT, sha TEXT, размер INTEGER, file_ids TEXT, время INTEGER)''')
     c.commit()
     return c
 
@@ -136,11 +140,16 @@ def положить(path, теги=''):
         return {'имя': row[0], 'sha256': sha, 'частей': 0, 'повтор': True}
     имя = os.path.basename(path)
     base, ext = os.path.splitext(имя)
-    ids, n = [], 0
+    ids, n, повторно, залито = [], 0, 0, 0
     if size <= CHUNK:
-        fid, _ = _upload(path, '[%s] %s' % (теги or 'склад', имя), token, chat)
-        ids.append(fid)
-        n = 1
+        sha_ч = sha
+        row = c.execute('SELECT file_id FROM части WHERE sha=?', (sha_ч,)).fetchone()
+        if row:
+            ids.append(row[0]); n = 1; повторно += 1
+        else:
+            fid, _ = _upload(path, '[%s] %s' % (теги or 'склад', имя), token, chat)
+            ids.append(fid); n = 1; залито += 1
+            c.execute('INSERT OR REPLACE INTO части VALUES(?,?,?,?)', (sha_ч, fid, size, int(time.time())))
     else:
         tmpdir = os.path.join(STORE, '_части')
         os.makedirs(tmpdir, exist_ok=True)
@@ -150,17 +159,28 @@ def положить(path, теги=''):
                 piece = os.path.join(tmpdir, '%s.part%02d' % (base, i + 1))
                 with open(piece, 'wb') as g:
                     g.write(f.read(CHUNK))
-                fid, _ = _upload(piece, '[%s] %s часть %d/%d' % (теги or 'склад', имя, i + 1, parts), token, chat)
-                ids.append(fid)
+                sha_ч = _sha256(piece)
+                row = c.execute('SELECT file_id FROM части WHERE sha=?', (sha_ч,)).fetchone()
+                if row:                                  # такая часть уже лежит в Telegram
+                    ids.append(row[0]); повторно += 1
+                else:
+                    fid, _ = _upload(piece, '[%s] %s часть %d/%d' % (теги or 'склад', имя, i + 1, parts), token, chat)
+                    ids.append(fid); залито += 1
+                    c.execute('INSERT OR REPLACE INTO части VALUES(?,?,?,?)',
+                              (sha_ч, fid, os.path.getsize(piece), int(time.time())))
                 os.remove(piece)
         n = parts
+    старая = c.execute('SELECT sha256, размер, file_ids FROM файлы WHERE имя=?', (имя,)).fetchone()
+    if старая and старая[0] != sha:                      # новая версия — старую не теряем
+        c.execute('INSERT INTO версии VALUES(?,?,?,?,?)', (имя, старая[0], старая[1], старая[2], int(time.time())))
     c.execute('DELETE FROM поиск WHERE имя=?', (имя,))
     c.execute('INSERT OR REPLACE INTO файлы VALUES(?,?,?,?,?,?,?,?)',
               (имя, size, sha, n, json.dumps(ids), теги, int(time.time()), _peek_text(path)))
     c.execute('INSERT INTO поиск(имя, теги, текст) VALUES(?,?,?)', (имя, теги, _peek_text(path)))
     c.commit()
     c.close()
-    return {'имя': имя, 'размер': size, 'sha256': sha, 'частей': n}
+    return {'имя': имя, 'размер': size, 'sha256': sha, 'частей': n,
+            'залито_частей': залито, 'повторно_частей': повторно}
 
 
 def взять(имя, куда='.'):
@@ -215,11 +235,51 @@ def найти(текст, предел=20):
     return [{'имя': r[0], 'размер': r[1], 'теги': r[2]} for r in rows]
 
 
+def проверить(имя=None):
+    """Сверяет содержимое частей в Telegram с индексом: скачивает и считает sha256."""
+    token, _ = _cfg()
+    c = _db()
+    запрос = 'SELECT имя, sha256, file_ids FROM файлы' + (' WHERE имя=?' if имя else '')
+    строки = c.execute(запрос, ((имя,) if имя else ())).fetchall()
+    c.close()
+    итог = []
+    for имя_ф, sha_ф, ids in строки:
+        ids = json.loads(ids)
+        tmp = os.path.join(STORE, '_проверка')
+        os.makedirs(tmp, exist_ok=True)
+        части = []
+        for i, fid in enumerate(ids, 1):
+            p = os.path.join(tmp, 'p%02d' % i)
+            _download(fid, p, token)
+            части.append(p)
+        путь = os.path.join(tmp, 'целиком')
+        with open(путь, 'wb') as g:
+            for p in части:
+                g.write(open(p, 'rb').read())
+                os.remove(p)
+        ок = _sha256(путь) == sha_ф
+        os.remove(путь)
+        итог.append({'имя': имя_ф, 'частей': len(ids), 'целиком_совпало': ок})
+    return итог
+
+
+def версии(имя):
+    c = _db()
+    строки = c.execute('SELECT sha, размер, время FROM версии WHERE имя=? ORDER BY время DESC', (имя,)).fetchall()
+    c.close()
+    return [{'sha256': r[0], 'размер': r[1], 'когда': time.strftime('%d.%m %H:%M', time.localtime(r[2]))}
+            for r in строки]
+
+
 def статистика():
     c = _db()
     n, s = c.execute('SELECT COUNT(*), COALESCE(SUM(размер),0) FROM файлы').fetchone()
+    ч, ч_байт = c.execute('SELECT COUNT(*), COALESCE(SUM(размер),0) FROM части').fetchone()
+    в = c.execute('SELECT COUNT(*) FROM версии').fetchone()[0]
     c.close()
-    return {'файлов': n, 'байт': s, 'МБ': round(s / 1048576, 1), 'индекс': DB}
+    return {'файлов': n, 'байт': s, 'МБ': round(s / 1048576, 1),
+            'уникальных_частей': ч,
+            'старых_версий': в, 'индекс': DB}
 
 
 def синхронизировать(папка, теги=''):
@@ -277,6 +337,12 @@ def _main(argv):
             print(json.dumps(статистика(), ensure_ascii=False, indent=1))
         elif cmd in ('sync', 'синхронизировать'):
             print(json.dumps(синхронизировать(argv[1], argv[2] if len(argv) > 2 else ''), ensure_ascii=False))
+        elif cmd in ('проверить', 'verify'):
+            for r in проверить(argv[1] if len(argv) > 1 else None):
+                print('%-44s частей %-3d целостность: %s' % (r['имя'][:44], r['частей'], 'СОВПАЛО' if r['целиком_совпало'] else 'БИТО'))
+        elif cmd in ('версии', 'versions'):
+            for r in версии(argv[1]):
+                print('%s  %9d Б  %s' % (r['sha256'][:16], r['размер'], r['когда']))
         elif cmd == 'test':
             print(json.dumps(test(), ensure_ascii=False, indent=1))
         else:
