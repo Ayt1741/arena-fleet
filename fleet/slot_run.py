@@ -14,11 +14,11 @@ UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
       '(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36')
 SLOT = int(os.environ.get('SLOT', '0'))
 ACC = ((SLOT - 1) % 10) + 1          # 2 машины на каждый из 10 аккаунтов
-PAIR = os.environ.get('A%02d' % ACC, '') or ''
-TG_TOKEN = os.environ.get('TG_TOKEN', '')
-MEMORY_PARTS = os.environ.get('MEMORY_PARTS', '')
+PAIR = (os.environ.get('A%02d' % ACC, '') or '').strip()
+TG_TOKEN = os.environ.get('TG_TOKEN', '').strip()
+MEMORY_PARTS = os.environ.get('MEMORY_PARTS', '').strip()
 TASK = os.environ.get('TASK', 'что уже сделано по проекту')
-TG_CHAT = os.environ.get('TG_CHAT', '7023156818')
+TG_CHAT = os.environ.get('TG_CHAT', '7023156818').strip()
 
 
 def post_json(url, body, headers):
