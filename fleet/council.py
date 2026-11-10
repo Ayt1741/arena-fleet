@@ -174,12 +174,14 @@ async def main():
             did = e['id']
             link = 'https://arena.ai/c/%s' % did
             msgs = []
-            for _ in range(8):
-                await pg.wait_for_timeout(5000)
+            for _ in range(40):
+                await pg.wait_for_timeout(6000)
                 got = await api(pg, '/api/chat/%s/messages?limit=50' % did)
-                msgs = got.get('data') or got.get('messages') or []
-                if len(msgs) >= 2:
+                msgs = got.get('data') or got.get('messages') or got.get('entries') or []
+                if any((m.get('role') or m.get('author')) not in ('user', None) and
+                       (m.get('content') or m.get('text')) for m in msgs):
                     break
+            log({'event': 'messages', 'dialog': did, 'count': len(msgs)})
             made += 1
             rec = {'slot': SLOT, 'account': '%02d' % ACC, 'leader': leader, 'num': num, 'dialog': did,
                    'link': link, 'title': (e.get('title') or '')[:80], 'messages': msgs}
