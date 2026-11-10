@@ -147,6 +147,26 @@ async def main():
             await pg.keyboard.press('Enter')
             await pg.wait_for_timeout(2500)
             log({'event': 'terms', 'closed': 'By clicking' not in await pg.inner_text('body')})
+        # режим: Battle ломает генерацию — переключаем на прямой чат, если он есть
+        переключено = ''
+        for имя in ('Battle', 'Side by Side', 'Direct'):
+            try:
+                кнопка = pg.get_by_role('button', name=имя, exact=False).first
+                if await кнопка.count():
+                    await кнопка.click(timeout=6000)
+                    await pg.wait_for_timeout(1200)
+                    for вариант in ('Direct', 'Direct Chat', 'Прямой', 'Side by Side'):
+                        пункт = pg.get_by_text(вариант, exact=True).first
+                        if await пункт.count():
+                            await пункт.click(timeout=6000)
+                            переключено = вариант
+                            break
+                    if переключено:
+                        break
+            except Exception as е:
+                log({'event': 'mode_try', 'name': имя, 'err': str(е)[:60]})
+        log({'event': 'mode', 'selected': переключено or 'как было'})
+        await pg.wait_for_timeout(1500)
         base = {e.get('id') for e in (await api(pg, '/api/history/unified?limit=20&includeArchived=false')).get('entries', [])}
         made = 0
         for num in range(1, GOAL + 1):
