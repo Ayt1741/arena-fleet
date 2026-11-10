@@ -16,7 +16,7 @@ SLOT = int(os.environ.get('SLOT', '0'))
 ACC = ((SLOT - 1) % 10) + 1          # 2 машины на каждый из 10 аккаунтов
 PAIR = (os.environ.get('A%02d' % ACC, '') or '').strip()
 TG_TOKEN = os.environ.get('TG_TOKEN', '').strip()
-MEMORY_PARTS = os.environ.get('MEMORY_PARTS', '').strip()
+MEMORY_PARTS = re.sub(r'\s+', '', os.environ.get('MEMORY_PARTS', ''))
 TASK = os.environ.get('TASK', 'что уже сделано по проекту')
 TG_CHAT = os.environ.get('TG_CHAT', '7023156818').strip()
 
