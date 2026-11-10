@@ -1,5 +1,5 @@
 name: council-arena
-# Совет на LM Arena: 10 аккаунтов = 10 руководителей, по 2 машины на аккаунт.
+# Совет на LM Arena: 10 аккаунтов = 10 руководителей, по 2 машины на аккаунт (20 машин).
 on:
   workflow_dispatch:
     inputs:
@@ -25,7 +25,7 @@ jobs:
       - name: Браузер
         run: |
           pip install -q playwright
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium
       - name: Совет
         env:
           SLOT: ${{ matrix.slot }}
@@ -33,12 +33,22 @@ jobs:
           TASK: ${{ github.event.inputs.task }}
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
-          ARENA_EMAIL: ${{ secrets[format('ACC{0}_EMAIL', matrix.slot)] }}
-          ARENA_PASS: ${{ secrets[format('ACC{0}_PASS', matrix.slot)] }}
+          A01: ${{ secrets.ARENA_ACC_01 }}
+          A02: ${{ secrets.ARENA_ACC_02 }}
+          A03: ${{ secrets.ARENA_ACC_03 }}
+          A04: ${{ secrets.ARENA_ACC_04 }}
+          A05: ${{ secrets.ARENA_ACC_05 }}
+          A06: ${{ secrets.ARENA_ACC_06 }}
+          A07: ${{ secrets.ARENA_ACC_07 }}
+          A08: ${{ secrets.ARENA_ACC_08 }}
+          A09: ${{ secrets.ARENA_ACC_09 }}
+          A10: ${{ secrets.ARENA_ACC_10 }}
         run: python3 fleet/council.py
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: council-${{ matrix.slot }}
-          path: council-*.json
+          path: |
+            council-*.json
+            fail-*.png
           if-no-files-found: ignore
