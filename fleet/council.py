@@ -181,6 +181,15 @@ async def main():
                 if any((m.get('role') or m.get('author')) not in ('user', None) and
                        (m.get('content') or m.get('text')) for m in msgs):
                     break
+            if not msgs:
+                # запасной путь: читаем ответ прямо со страницы, без API
+                for _ in range(30):
+                    await pg.wait_for_timeout(6000)
+                    текст = await pg.inner_text('body')
+                    if len(текст) > len(text) + 200:
+                        msgs = [{'role': 'assistant', 'content': текст[текст.find(text[:40]) + len(text):][:8000]
+                                 if text[:40] in текст else текст[-8000:]}]
+                        break
             log({'event': 'messages', 'dialog': did, 'count': len(msgs)})
             made += 1
             rec = {'slot': SLOT, 'account': '%02d' % ACC, 'leader': leader, 'num': num, 'dialog': did,
