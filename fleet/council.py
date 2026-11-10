@@ -17,7 +17,7 @@ import random
 import re
 import urllib.request
 
-os.environ.setdefault('PLAYWRIGHT_BROWSERS_PATH', '/home/user/.cache/ms-playwright')
+os.environ.setdefault('PLAYWRIGHT_BROWSERS_PATH', os.path.expanduser('~/.cache/ms-playwright'))
 import pathlib
 import subprocess
 import sys
@@ -29,13 +29,20 @@ from playwright.async_api import async_playwright
 
 SLOT = int(os.environ.get('SLOT', '1'))
 GOAL = int(os.environ.get('GOAL', '1'))
-TG_TOKEN = os.environ.get('TG_TOKEN', '')
-TG_CHAT = os.environ.get('TG_CHAT', '7023156818')
+TG_TOKEN = os.environ.get('TG_TOKEN', '').strip()
+TG_CHAT = os.environ.get('TG_CHAT', '7023156818').strip()
 UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
       'Chrome/126.0.0.0 Safari/537.36')
 ACC = ((SLOT - 1) % 10) + 1                      # 2 машины на аккаунт: 1..10, 11..20 -> 1..10
-EMAIL = os.environ.get('ARENA_EMAIL', '')
-PASS = os.environ.get('ARENA_PASS', '')
+EMAIL = os.environ.get('ARENA_EMAIL', '').strip()
+PASS = os.environ.get('ARENA_PASS', '').strip()
+if not EMAIL:
+    # пара «почта:пароль» из секрета A01..A10 (тот же формат, что у флота)
+    _pair = os.environ.get('A%02d' % ACC, '').strip()
+    if ':' in _pair:
+        EMAIL, PASS = _pair.split(':', 1)
+    elif '|' in _pair:
+        EMAIL, PASS = _pair.split('|', 1)
 TASK = os.environ.get('TASK', '')                # задание совету
 TITLE = os.environ.get('TASK_TAG', 'СОВЕТ')
 
