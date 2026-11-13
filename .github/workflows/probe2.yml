@@ -1,0 +1,73 @@
+name: probe2
+# Два пути опроса: BATTLE (арена принимает) и DIRECT под xvfb (recaptcha требует настоящий браузер).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'battle или direct'
+        default: 'battle'
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        slot: [1,2,3,4,5,6,7,8,9,10]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Браузер
+        run: |
+          pip install -q playwright
+          python -m playwright install chromium
+          sudo apt-get install -y -q libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
+            libasound2t64 libpango-1.0-0 libcairo2 xvfb || true
+      - name: Задание
+        env:
+          SLOT: ${{ matrix.slot }}
+          MODE: ${{ github.event.inputs.mode }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          з = json.load(open('fleet/probe_tasks.json', encoding='utf-8'))
+          к = str(os.environ['SLOT'])
+          з = з.get(к) or з.get('1')
+          json.dump(з, open('probe-task.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+          print('слот', к, '· модель', з['model'], '· роль', з['role'])
+          PY
+      - name: Опрос
+        env:
+          SLOT: ${{ matrix.slot }}
+          MODE: ${{ github.event.inputs.mode }}
+          HEADFUL: ${{ github.event.inputs.mode == 'direct' && '1' || '0' }}
+          TASK_FILE: probe-task.json
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          A01: ${{ secrets.ARENA_ACC_01 }}
+          A02: ${{ secrets.ARENA_ACC_02 }}
+          A03: ${{ secrets.ARENA_ACC_03 }}
+          A04: ${{ secrets.ARENA_ACC_04 }}
+          A05: ${{ secrets.ARENA_ACC_05 }}
+          A06: ${{ secrets.ARENA_ACC_06 }}
+          A07: ${{ secrets.ARENA_ACC_07 }}
+          A08: ${{ secrets.ARENA_ACC_08 }}
+          A09: ${{ secrets.ARENA_ACC_09 }}
+          A10: ${{ secrets.ARENA_ACC_10 }}
+        run: |
+          if [ "$MODE" = "direct" ]; then
+            xvfb-run -a python3 fleet/probe2.py
+          else
+            python3 fleet/probe2.py
+          fi
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe2-${{ matrix.slot }}
+          path: |
+            probe2-*.json
+            probe2-*.png
+          if-no-files-found: ignore
