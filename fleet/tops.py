@@ -96,7 +96,7 @@ def log(r):
     print(json.dumps(r, ensure_ascii=False), flush=True)
 
 
-def разобрать_ bing(html):
+def разобрать_bing(html):
     out = []
     for блок in re.findall(r'<li class="b_algo".*?</li>', html, re.S)[:6]:
         m = re.search(r'<h2><a href="([^"]+)"[^>]*>(.*?)</a>', блок, re.S)
@@ -138,7 +138,7 @@ def разобрать_ddg(html):
     return out
 
 
-РАЗБОР = {'bing': разобрать_ bing, 'ddg-lite': разобрать_lite,
+РАЗБОР = {'bing': разобрать_bing, 'ddg-lite': разобрать_lite,
           'marginalia': разобрать_marginalia, 'ddg-html': разобрать_ddg}
 
 
