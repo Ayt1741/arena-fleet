@@ -1,0 +1,44 @@
+name: diag-direct
+# Диагностика: почему Direct отвечает «Something went wrong while generating».
+on:
+  workflow_dispatch:
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        slot: [1,2,3,4,5,6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Браузер
+        run: |
+          pip install -q playwright
+          python -m playwright install chromium
+          sudo apt-get install -y -q libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 \
+            libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 \
+            libasound2t64 libpango-1.0-0 libcairo2 || true
+      - name: Диагностика
+        env:
+          SLOT: ${{ matrix.slot }}
+          A01: ${{ secrets.ARENA_ACC_01 }}
+          A02: ${{ secrets.ARENA_ACC_02 }}
+          A03: ${{ secrets.ARENA_ACC_03 }}
+          A04: ${{ secrets.ARENA_ACC_04 }}
+          A05: ${{ secrets.ARENA_ACC_05 }}
+          A06: ${{ secrets.ARENA_ACC_06 }}
+          A07: ${{ secrets.ARENA_ACC_07 }}
+          A08: ${{ secrets.ARENA_ACC_08 }}
+          A09: ${{ secrets.ARENA_ACC_09 }}
+          A10: ${{ secrets.ARENA_ACC_10 }}
+        run: python3 fleet/diag.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diag-${{ matrix.slot }}
+          path: diag-*.png
+          if-no-files-found: ignore
