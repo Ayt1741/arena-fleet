@@ -10,6 +10,7 @@
 """
 import json
 import os
+import sys
 import re
 import time
 import urllib.parse
@@ -86,6 +87,10 @@ UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from seek import искать
+
+def log(r):
+    print(json.dumps(r, ensure_ascii=False), flush=True)
+
 
 def main():
     мои = [т for i, т in enumerate(ТЕМЫ) if i % ВСЕГО == (SLOT - 1) % ВСЕГО]
