@@ -1,0 +1,28 @@
+name: memory-agents-53
+# 30 машин ищут, как улучшить память агента (темы + реальные запросы + цитаты).
+on:
+  workflow_dispatch:
+jobs:
+  memory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        slot: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Агенты памяти
+        env:
+          SLOT: ${{ matrix.slot }}
+          SLOTS: '30'
+        run: python3 fleet/memory_agent.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-${{ matrix.slot }}
+          path: memory-*.json
+          if-no-files-found: ignore
