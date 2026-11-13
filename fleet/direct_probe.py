@@ -282,9 +282,9 @@ async def main():
         for m in мусор:
             ответ = ответ.replace(m, ' ')
         ответ = '\n'.join(стр for стр in ответ.split('\n')
-                           if стр.strip() and not стр.strip().startswith('\u'))
+                           if стр.strip() and not стр.strip().startswith(chr(92) + 'u'))
         if 'Something went wrong' in ответ or not ответ.strip():
-            ответ = 
+            ответ = ''
         log({'event': 'collected', 'chars': len(ответ)})
         ссылка = 'https://arena.ai/c/%s' % диалог if диалог else ''
         rec = {'slot': SLOT, 'account': '%02d' % ACC, 'model': MODEL, 'role': ROLE,
