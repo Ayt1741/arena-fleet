@@ -1,0 +1,31 @@
+name: search-fleet-53
+# 20 машин, 140 запросов, 4 движка (bing, ddg-lite, marginalia, ddg-html).
+on:
+  workflow_dispatch:
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        slot: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Поиск
+        env:
+          SLOT: ${{ matrix.slot }}
+          SLOTS: '20'
+          QUERIES: fleet/queries-53.txt
+          OUT: search-${{ matrix.slot }}.json
+          STREAM: search-${{ matrix.slot }}.jsonl
+        run: python3 fleet/searcher2.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: search-${{ matrix.slot }}
+          path: search-*.json
+          if-no-files-found: ignore
