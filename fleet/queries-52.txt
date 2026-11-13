@@ -1,0 +1,160 @@
+# Запросы хода 52: модели арены, выбор, флот, recaptcha.
+# По одному в строке. Строки с # и пустые пропускаются.
+
+Claude Sonnet 5.5 xhigh vs max FrontierCode benchmark
+Artificial Analysis coding agent index November 2026 full list
+arena.ai leaderboard code webdev November 2026
+arena.ai text leaderboard top 10 models November 2026
+Muse Wonder Max DeepSWE Terminal-Bench scores
+Muse Spark 1.3 max effort benchmarks full table
+Muse Wonder Full vs Sonnet 5.5 coding comparison
+Claude Opus 5.5 Terminal-Bench 4.0 independent run
+Claude Haiku 5.5 effort levels low medium high benchmark
+Gemini 4 Argon long context 1M output limit
+Gemini 3.8 Flash price increase January 2027
+GPT-6.1 Sol versus GPT-6 Astra coding which to use
+GPT-6 Astra price per million tokens context window
+GPT-6 Luna Coding Agent Index 41 regression
+Claude Fable 5.1 versus Fable 5.2 differences pricing
+Kimi K3 webdev arena number one 1M context
+Kimi K3 Terminal-Bench 2.1 score weakness
+Grok 4.6 medium versus xhigh coding index
+Grok 4.6 Terminal-Bench 4.0 poor score
+DeepSeek V4.1 Flash off-peak pricing cache
+DeepSeek V4.1 Flash benchmark 79.4 Terminal-Bench
+MiMo-V2.6-Pro Xiaomi benchmark table Opus 5
+GLM-5.3-Flash Intelligence Index 57 price
+Inkling Thinking Machines open weights benchmarks
+U2-Flash unisound SWE-bench Pro 61.6
+ERNIE 5.5 Flash Preview Baidu arena code rating
+muse-image meta model image generation
+arena.ai direct mode 18 models list
+arena.ai agent mode web search tools
+arena.ai battle mode vote reveals model names
+arena.ai credits reset 24 hours first prompt
+arena.ai terms of use one account automated requests
+arena.ai recaptcha enterprise site key
+recaptcha v3 score datacenter IP low 0.1
+recaptcha v3 token expires two minutes reuse
+playwright persistent context recaptcha score better
+GitHub Actions hosted runner IP reputation bot detection
+GitHub Actions matrix parallel 20 jobs cost minutes
+lm arena recaptcha validation failed github issue
+arena.ai rate limit prompt failed 429 meaning
+arena.ai side by side mode removed flag
+arena.ai code arena webdev leaderboard Fable 5.2
+arena.ai search leaderboard web grounded models
+muse-wonder-1.0 Meta Model API identifier
+muse-wonder-1.0 preview availability
+Muse Code Power Usage 50 dollars Muse Wonder Full
+Muse Code Maximum Usage 200 dollars plan
+Meta Model API rate limits 3000 requests minute
+muse-ember-max Meta model identifier
+Muse Ember trained using Muse Wonder Full weights private
+Meta Model API contributors tier pricing difference
+Artificial Analysis cost per task comparison table 2026
+prompt caching 10 percent discount Anthropic
+batch API half price Claude Sonnet 5.5
+Anthropic adaptive thinking default effort high
+Sonnet 5.5 context window 1M max output 128K
+Opus 5.5 40 percent cost reduction token execution
+SWE-bench Pro public leaderboard 63 models November
+SWE-bench Multilingual Opus 5.5 93.9
+Terminal-Bench 4.0 recalibrated version differences
+CursorBench 4.0 leaderboard November 2026
+SWE-Marathon v1.1 leaderboard best scores
+AutomationBench-AA Zapier workflows leaderboard
+GDPval-AA v2.1 Elo leaderboard November 2026
+JobBench leaderboard agent tasks
+ProgramBench leaderboard 2026
+Vals Index leaderboard 2026 Fable 5.1
+LiveCodeBench leaderboard 2026
+ARC-AGI-2 leaderboard 2026 models
+Humanity's Last Exam verified leaderboard models
+CritPt benchmark leaderboard 2026
+AA-LCR long context reasoning leaderboard
+SciCode leaderboard models 2026
+OSWorld 2.0 leaderboard computer use models
+MRCR long context retrieval leaderboard 512K
+BrowseComp leaderboard 2026 models
+Tau-bench banking leaderboard models
+GPQA diamond leaderboard November 2026
+AIME 2026 leaderboard models
+IMOAnswerBench leaderboard 2026
+HMMT February 2026 leaderboard
+GPT-6.1 Sol prompt over 272K double price
+Claude Sonnet 5.5 cache read price 0.10
+Claude Haiku 5.5 cache read 0.01 price tier
+Claude Fable 5.1 latency 197 minutes
+muse-spark-1.3 price 1.25 input 4.25 output
+muse-spark-1.3 contributor tier 0.10 price
+Meta Muse models API pricing comparison 2026
+muse-wonder web search grounding price per 1000 queries
+Arena model capabilities web file image list
+arena RSC payload model list endpoint
+arena.ai direct model selector featured priority models
+arena.ai model selector remove side by side flag
+arena.ai leaderboard Cloudflare blocked headless
+arena.ai leaderboard text search endpoint JSON
+arena.ai leaderboard agent overview
+Claude Sonnet 5.5 on Frontier Code xhigh beats max
+reasoning effort max token usage 15 times increase
+Claude Code code review skill subagent penalty benchmark
+Haiku 5.5 versus Muse Ember cost per task
+Ember AutomationBench 37.8 versus Haiku 13.9
+Ember Terminal-Bench 4.0 40.9 versus Haiku 39.2
+Ember AA Coding Agent Index 46 versus 37
+Ember FrontierCode 27.2 versus Haiku 34.9
+Kimi K3 BrowseComp 91.2 compaction 300K
+Kimi K3 active experts 16 of 896
+Kimi K3 code migration leaderboard 2026
+GLM 5.3 Flash Toolathlon 78.4 AutomationBench 48.8
+MiMo V2.6 Flash benchmarks price
+Inkling Design Arena agentic web app Elo 1257
+Inkling ForecastBench calibration Brier index
+U2 Flash parameters 266B 10B active MoE
+DeepSeek V4.1 Flash architecture 552B 8B active
+arena.ai code arena webdev Gemini 4 Carbon
+Gemini 4 Carbon versus Gemini 4 Argon difference
+Claude Fable 5.2 price 8 dollars 40 output
+GPT-6 Sol versus GPT-6.1 Sol improvement 6.4 points
+GPT-6.1 Sol AA Intelligence Index 84.6
+GPT-6.1 Sol Terminal-Bench Science 5.47 per task
+arena.ai agent leaderboard orchestrator random model
+arena.ai API endpoint create-evaluation
+arena recaptcha enterprise execute action submit
+arena.ai RSC _next static chunks model list
+arena.ai terms update tou consent endpoint
+arena.ai history unified API entries
+arena.ai api chat messages cursor parameter
+arena.ai sign-in email nextjs-api cookies
+GitHub API workflow dispatch matrix slots
+GitHub Actions secrets arena accounts
+Python playwright persistent_context user_data_dir recaptcha
+Chrome stealth automation detection score
+arena.ai rate limit recovery time hours recaptcha
+arena.ai 429 prompt failed not prompt issue
+arena.ai direct credits per model limit
+muse ember automation bench 68.1 max
+muse spark 1.3 GDPVal 1754 Opus 1824
+muse spark 1.3 jobbench 64.9 osworld 66.9
+muse spark 1.3 output limit 943718 tokens
+Gemini 4 Argon Vals Index 68.9
+Gemini 4 Argon AutomationBench enterprise
+Claude Opus 5.5 always-on adaptive thinking
+Opus 5.5 token cost 40 percent lower Opus 5
+Anthropic model lifecycle policy September 2027
+Fable 5.1 RSI index 35.03 percent cost 1481
+Fable 5.1 LiveCodeBench 90.52 number one
+Fable 5.1 LegalBench 88.51 rank two
+GPT-6 Luna price 0.05 input search leaderboard
+Claude Sonnet 4.5 search model 1159 Elo
+Grok 4.1 fast search leaderboard 1172
+Arena image video arena models 2026 list
+arena.ai image arena Sunburst GPT-Image-2.5
+Google recaptcha enterprise ready shim site key 6Le
+recaptcha v3 action parameter mismatch score 0.1
+arena.ai API history evaluation type session id
+arena.ai messages endpoint limit cursor string
+Playwright headless shell vs chromium channel score
+arena.ai fable opus sonnet model ids directory
