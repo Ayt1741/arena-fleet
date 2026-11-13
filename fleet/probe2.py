@@ -148,6 +148,7 @@ async def основной():
         ошибки = []
 
         async def ловить(resp):
+          try:
             u = resp.url
             if 'arena.ai' not in u or 'analytics' in u or 'google' in u:
                 return
@@ -160,7 +161,9 @@ async def основной():
                 тело = (await resp.text())[:500]
             except Exception:
                 pass
-            ошибки.append({'status': resp.status, 'url': u[:150], 'body': тела[:300]})
+            ошибки.append({'status': resp.status, 'url': u[:150], 'body': тело[:300]})
+          except Exception as e:
+            pass
 
         pg.on('response', lambda r: asyncio.ensure_future(ловить(r)))
         url = 'https://arena.ai/direct' if MODE == 'direct' else 'https://arena.ai/text'
@@ -203,6 +206,12 @@ async def основной():
                 except Exception as e:
                     log({'event': 'battle_click', 'err': str(e)[:80]})
             await pg.wait_for_timeout(2500)
+            # после переключения в Battle поле ввода может быть другим — ищем заново
+            for _ in range(20):
+                if await pg.locator('textarea').count():
+                    break
+                await pg.wait_for_timeout(1500)
+            log({'event': 'textarea', 'count': await pg.locator('textarea').count()})
         base = {e.get('id') for e in (await api(pg, '/api/history/unified?limit=20&includeArchived=false')).get('entries', [])}
         коробка = pg.locator('textarea').first
         await коробка.click(timeout=25000)
