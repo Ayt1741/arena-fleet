@@ -11,6 +11,7 @@ bing → ddg-lite → marginalia → ddg-html. Каждый запрос — н�
 """
 import json
 import os
+import sys
 import re
 import time
 import urllib.parse
@@ -27,9 +28,22 @@ UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from seek import искать
 
+def log(r):
+    print(json.dumps(r, ensure_ascii=False), flush=True)
+
+
+def найти_файл(имя):
+    """Файл запросов ищем и в корне, и в fleet/ — workflow работает из корня репозитория."""
+    баз = os.path.basename(имя)
+    for путь in (имя, баз, 'fleet/' + баз, os.path.join('..', 'fleet', баз)):
+        if os.path.exists(путь):
+            return путь
+    raise FileNotFoundError(имя)
+
+
 def main():
     все = []
-    with open(ФАЙЛ, encoding='utf-8') as f:
+    with open(найти_файл(ФАЙЛ), encoding='utf-8') as f:
         for s in f:
             s = s.strip()
             if s and not s.startswith('#'):
