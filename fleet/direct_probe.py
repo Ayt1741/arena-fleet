@@ -28,6 +28,15 @@ from playwright.async_api import async_playwright
 SLOT = int(os.environ.get('SLOT', '1'))
 MODEL = os.environ.get('MODEL', '').strip()
 TASK = os.environ.get('TASK', '').strip()
+TASK_FILE = os.environ.get('TASK_FILE', '').strip()
+if TASK_FILE and os.path.exists(TASK_FILE):
+    try:
+        _t = json.load(open(TASK_FILE, encoding='utf-8'))
+        MODEL = str(_t.get('model') or MODEL)
+        TASK = str(_t.get('task') or TASK)
+        ROLE = str(_t.get('role') or ROLE)
+    except Exception as e:
+        log({'event': 'task_file_error', 'err': str(e)[:80]})
 ROLE = os.environ.get('ROLE', '').strip()
 TG_TOKEN = os.environ.get('TG_TOKEN', '').strip()
 TG_CHAT = os.environ.get('TG_CHAT', '7023156818').strip()
@@ -266,6 +275,16 @@ async def main():
             i = текст.find(TASK[:40])
             if i >= 0:
                 ответ = текст[i + len(TASK):].strip()
+        # выкидываем служебные надписи интерфейса и следы ошибки
+        мусор = ('Something went wrong while generating', 'Trace ID:', 'Clear', 'Direct',
+                 'Battle ModeBattle 2 anonymous models', 'Agent ModeBuilt for complex tasks',
+                 'Side by SideCompare 2 models of your choice', 'DirectChat with 1 model at a time')
+        for m in мусор:
+            ответ = ответ.replace(m, ' ')
+        ответ = '\n'.join(стр for стр in ответ.split('\n')
+                           if стр.strip() and not стр.strip().startswith('\u'))
+        if 'Something went wrong' in ответ or not ответ.strip():
+            ответ = 
         log({'event': 'collected', 'chars': len(ответ)})
         ссылка = 'https://arena.ai/c/%s' % диалог if диалог else ''
         rec = {'slot': SLOT, 'account': '%02d' % ACC, 'model': MODEL, 'role': ROLE,
