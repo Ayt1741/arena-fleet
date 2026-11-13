@@ -172,6 +172,39 @@ async def токен_recaptcha(pg):
         return ''
 
 
+ХВОСТ_МУСОР = ("\nDirect\n\nBattle Mode", "\nBattle ModeBattle", "Get More Done With Agents",
+               "Terms of Use", "Start evaluating agentic AI", "Try it now", "Hide this",
+               "Ask anything", "Thinking...\n\n", "Generating...\n\n")
+
+
+def разбор_ответа(текст, вопрос):
+    """Из страницы достаём только ответ модели: после вопроса и до служебных надписей."""
+    i = текст.rfind(вопрос[:40])
+    хвост = текст[i + len(вопрос):] if i >= 0 else текст
+    for м in ХВОСТ_МУСОР:
+        j = хвост.find(м)
+        if j >= 0:
+            хвост = хвост[:j]
+    строки = [с for с in хвост.split("\n") if с.strip()]
+    # отбрасываем служебные надписи и эхо вопроса
+    чист = []
+    for с in строки:
+        t = с.strip()
+        if not t:
+            continue
+        if t in ("Direct", "Battle", "Agent Mode", "Side by Side", "Text", "OLDER"):
+            continue
+        if t.startswith(("Battle ModeBattle", "Agent ModeBuilt", "Side by SideCompare",
+                         "DirectChat with 1 model", "Direct\n")):
+            continue
+        if t.startswith(chr(92) + "u"):
+            continue
+        if t == вопрос[:60]:
+            continue
+        чист.append(с)
+    return "\n".join(чист).strip()
+
+
 async def основной():
     модель = МОДЕЛИ[(SLOT - 1) % len(МОДЕЛИ)]
     вопрос = ВОПРОСЫ[(SLOT - 1) % len(ВОПРОСЫ)]
@@ -247,8 +280,7 @@ async def основной():
                 результат['notes'].append('генерация упала (recaptcha или сервер)')
                 break
             if len(txt) > 1200:
-                i_txt = txt.find(вопрос[:40])
-                хвост = txt[i_txt + len(вопрос):].strip() if i_txt >= 0 else txt
+                хвост = разбор_ответа(txt, вопрос)
                 результат['answer'] = хвост[:8000]
                 результат['ok'] = bool(хвост)
                 break
