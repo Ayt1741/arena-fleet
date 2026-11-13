@@ -198,14 +198,9 @@ async def основной():
             log({'event': 'model_pick', 'model': МОДЕЛЬ, 'ok': выбрана})
             await pg.wait_for_timeout(2000)
         else:
-            к = pg.get_by_role('button', name='Battle', exact=False).first
-            if await к.count():
-                try:
-                    await к.click(timeout=8000)
-                    await pg.wait_for_timeout(3500)
-                except Exception as e:
-                    log({'event': 'battle_click', 'err': str(e)[:80]})
-            await pg.wait_for_timeout(2500)
+            # кнопку Battle не нажимаем: в прогоне совета диалоги создавались без неё,
+            # а после клика арена режет отправку на recaptcha
+            await pg.wait_for_timeout(4000)
             # после переключения в Battle поле ввода может быть другим — ищем заново
             for _ in range(20):
                 if await pg.locator('textarea').count():
