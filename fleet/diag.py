@@ -6,6 +6,7 @@
 на отправку сообщения (URL, статус, начало тела). Ничего не меняет.
 """
 import asyncio
+import base64
 import json
 import os
 import pathlib
