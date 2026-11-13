@@ -1,0 +1,50 @@
+name: council-code-53
+# Совет на арене в режиме Battle Code (не Direct): блокировки recaptcha там нет.
+on:
+  workflow_dispatch:
+    inputs:
+      goal:
+        description: 'сколько заданий с каждой машины'
+        default: '1'
+jobs:
+  council:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        slot: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Браузер
+        run: |
+          pip install -q playwright
+          python -m playwright install chromium
+      - name: Совет Battle Code
+        env:
+          SLOT: ${{ matrix.slot }}
+          GOAL: ${{ github.event.inputs.goal }}
+          ARENA_URL: 'https://arena.ai/code?mode=battle'
+          A01: ${{ secrets.ARENA_ACC_01 }}
+          A02: ${{ secrets.ARENA_ACC_02 }}
+          A03: ${{ secrets.ARENA_ACC_03 }}
+          A04: ${{ secrets.ARENA_ACC_04 }}
+          A05: ${{ secrets.ARENA_ACC_05 }}
+          A06: ${{ secrets.ARENA_ACC_06 }}
+          A07: ${{ secrets.ARENA_ACC_07 }}
+          A08: ${{ secrets.ARENA_ACC_08 }}
+          A09: ${{ secrets.ARENA_ACC_09 }}
+          A10: ${{ secrets.ARENA_ACC_10 }}
+        run: python3 fleet/battle_council.py
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: council-${{ matrix.slot }}
+          path: |
+            council-*.json
+            shot-*.png
+            fail-*.png
+          if-no-files-found: ignore
