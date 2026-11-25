@@ -9,7 +9,7 @@ on:
 jobs:
   agent:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -30,50 +30,52 @@ jobs:
         run: |
           python - <<'PY' > "plan-${{ matrix.account }}-${{ matrix.agent }}.txt"
           import os, glob, json
-          SLOT = int(os.environ['SLOT']); ACC = int(os.environ['ACCOUNT_N']); N = int(os.environ['PLAN_N'])
-          ПОЛОСЫ = [
-           ("семантика выдачи", ["hybrid retrieval bm25 dense reciprocal rank fusion","chunking long documents retrieval recall benchmark","colbert late interaction maxsim reranking","query expansion pseudo relevance feedback bm25"]),
-           ("масштаб индекса", ["sqlite vec exact knn performance many vectors","hnsw vs ivfflat recall latency tradeoff","incremental index update sqlite vector search","embedding reuse cache cost latency"]),
-           ("внешняя оценка", ["memeval locomo longmemeval memory benchmark","rusbeir ndcg retrieval russian evaluation","promptfoo deepeval rag faithfulness agent eval","ragas context precision recall memory evaluation"]),
-           ("место цитаты", ["chunk offsets exact source citation agent","grounded answer quote exact span retrieval","attribution verifiable claim memory provenance","citation tracking memory pipeline source"]),
-           ("правила и контекст", ["agents md instruction file context engineering limits","context compaction preserve requirements agent","prompt caching stable prefix cost latency","progressive disclosure context memory management"]),
-           ("детерминированный контроль", ["guardrail deterministic output validation agent","schema constrained decoding tool call validation","approval gate human in the loop agent tool","policy check tool invocation compliance agent"]),
-           ("оперативная память", ["scratchpad working memory agent session","short term buffer eviction policy agent memory","recency weighting retrieval recent turns","session state persistence agent restart"]),
-           ("извлечение знаний", ["fact extraction propositions memory agent","entity linking knowledge extraction llm","deduplication supersede versioning memory store","contradiction detection long term memory"]),
-           ("забывание", ["forgetting curve memory decay importance","temporal decay recency weighted retrieval","garbage collect stale memory agent","retention policy ttl knowledge base agent"]),
-           ("интеграция готовых проектов", ["graphiti temporal knowledge graph memory","mem0 open source memory layer agent","letta memgpt agent memory server","langmem storage agnostic memory primitives"])]
-          ШАБЛОН = ["Как устроено {t} и что конкретно взять из готовой открытой реализации?",
+          SLOT=int(os.environ['SLOT']); ACC=int(os.environ['ACCOUNT_N']); N=int(os.environ['PLAN_N'])
+          ПОЛОСЫ=[
+           ("семантика выдачи",["hybrid retrieval bm25 dense reciprocal rank fusion implementation","maximal marginal relevance diversification retrieval","colbert late interaction token level maxsim","cross encoder reranker latency recall tradeoff","query expansion pseudo relevance feedback bm25 russian","multi vector embeddings per chunk max pooling","sparse neural retrieval splade bm25 fusion production","chunk size overlap effect on recall long documents","contextual retrieval contextual prefix embedding","question to answer embedding matching chat history","idf weighting rare terms conversational logs","vector similarity threshold tuning memory search","reciprocal rank fusion versus score fusion hybrid","learning to rank model for memory retrieval","distribution based score fusion dbsf retrieval","semantic cache similarity threshold retrieval"]),
+           ("масштаб индекса",["sqlite vec exact knn performance million vectors","hnsw versus ivfflat recall latency tradeoff python","incremental index update vector search without rebuild","sqlite fts5 tokenizer unicode61 russian porter","sqlite wal concurrent readers single writer","parallel embedding batching sharding pipeline","embedding model quantization int8 footprint","model2vec static embeddings cpu speed benchmark","fastembed onnx cpu multilingual throughput","vector database index rebuild cost upsert","memory mapped index cold start latency","sqlite json1 storing chunk offsets metadata","chromadb hnsw persistence portability","postgres pgvector ivfflat hnsw limits","batch embedding rate limits api cost","sqlite vacuum index compaction performance"]),
+           ("внешняя оценка",["memeval locomo longmemeval memory benchmark harness","rusbeir ndcg recall russian retrieval evaluation","promptfoo local llm eval compare two systems","deepeval rag faithfulness contextual precision recall","ragas context precision recall evaluation python","hit rate versus recall at k definition","mrr ndcg calculation from ranked list python","longmemeval knowledge update temporal questions","memoryagentbench tool use memory tasks suite","locomo multi session conversation question dataset","regression harness retrieval quality snapshot tests","ablation study retrieval configuration significance","llm as judge reliability bias evaluation","test contamination retrieval benchmark","error taxonomy retrieval false negative positive","benchmark reproduction docker runtime budget"]),
+           ("место цитаты",["chunk offsets character span exact citation","grounded answer verbatim quote evidence","provenance tracking source url memory fact","attribution verification claim to source mapping","context clipping citation truncation handling","quote extraction html details cleanup","source deduplication canonical url normalization","evidence ranking versus answer ranking","citation precision recall answer grounding","document versioning stale citation invalidation","unicode byte offsets python slicing russian","markdown table extraction into memory chunk","html boilerplate removal before embedding","citation link format requirement agent","traceability audit trail requirement answer","snippet versus full chunk context budget"]),
+           ("правила и контекст",["agents md instruction hierarchy context budget","context compaction preserving constraints summary","prompt caching stable prefix breakpoint","progressive disclosure context memory layers","system prompt versus project instructions precedence","token budget allocation system user retrieved","instruction file length limit best practices","context rot long conversation degradation","skill progressive loading tool description tokens","rules file duplication across agents consistency","rag context ordering most relevant last","context poisoning via retrieved documents","memory of negative instructions do not list","session summary merge strategy compaction","retrieval interleaving with instructions priority","token count characters russian ratio"]),
+           ("детерминированный контроль",["guardrail deterministic output validation memory","schema constrained decoding json tool call","approval gate human in the loop action","policy check tool invocation compliance","append only audit log hash chain tamper evidence","merkle tree append only log verification","guard input sanitization prompt injection memory","quarantine flag record until reviewed","input validation rules engine python agent","contract test memory write and retrieval","deterministic replay agent run debugging","idempotent memory write upsert semantics","circuit breaker memory subsystem failure","validation errors retry strategy agent loop","gitleaks secret scanning memory pipeline","unit tests retrieval ranking stability"]),
+           ("оперативная память",["scratchpad working memory ephemeral session","short term buffer eviction policy memory","recency weighting retrieval recent turns","session state persistence across restarts","hot cache in memory layer lru design","message queue asynchronous memory writes","memory write batching latency throughput","event sourced agent conversation log","conversation window sliding recent turns","tool result caching within session","long running task checkpoint resume agent","memory pressure backpressure queue limits","per user namespace isolation memory","ttl expiry entries garbage collection","ephemeral versus durable memory separation","hot path memory access latency budget"]),
+           ("извлечение знаний",["fact extraction propositions structured memory","entity linking knowledge extraction llm","deduplication near duplicate detection semantic","supersede versioning knowledge store update","contradiction detection conflicting facts memory","bitemporal valid time transaction time","knowledge update tests memory benchmark","structured output facts confidence score","canonicalization entity resolution merge records","extraction quality precision recall facts","atomic statements nested fact granularity","context dependent facts qualifiers storage","user preference extraction explicit implicit","ontology schema memory fact types","extraction cost tokens per message memory","passive versus active knowledge capture"]),
+           ("забывание",["forgetting curve memory decay importance","temporal decay recency weighted formula","garbage collection stale memory retention","ttl knowledge base expiration semantics","access frequency retention utility score","forgetting as feature agent memory design","consolidation merging memories into summaries","summary drift after repeated consolidation","memory bloat growth pruning over time","importance decay redundancy penalty","episodic semantic distinction forgetting rules","retention of critical instructions never forget","user requested forget right to erasure","staleness detection outdated facts agent","conflict resolution freshest wins wrong case","memory diet audit unused entries"]),
+           ("интеграция готовых проектов",["graphiti temporal knowledge graph open source","mem0 open source memory layer agent","letta memgpt agent memory server","langmem storage agnostic memory primitives","zep temporal knowledge graph managed versus oss","cognee knowledge graph memory ingestion","mcp memory server protocol agent","openhands memory plugin open source","memary open source memory agent","elasticsearch hybrid retrieval bm25 vector official","opensearch hybrid search neural sparse plugin","sqlite lancedb embedded vector database","chroma persist client embedding function","redis vector search official support","weaviate hybrid search bm25 vector official","llamaindex memory workflow persistence"])]
+          ШАБЛОН=["Как устроено {t} и что конкретно взять из готовой открытой реализации?",
            "Какие ограничения, лицензия и цена у лучшей готовой реализации по теме «{t}»?",
-           "Какая готовая реализация по теме «{t}» ставится на CPU и реально даёт прирост качества?",
+           "Какая готовая реализация по теме «{t}» ставится на CPU и даёт прирост качества?",
            "Есть ли готовые тесты и бенчмарки по теме «{t}», чтобы измерить эффект до и после?",
            "Что известно о провалах и границах применимости по теме «{t}»?"]
-          СРЕЗ = ["в offline-режиме без внешнего API","на Windows без WSL","при 2 ГБ RAM","на CPU без GPU","для русского языка","для 10 параллельных агентов","в SQLite без сервера","при потоке 100 запросов в день","без единого API-ключа","в 2026 году"]
-          big = ''
-          for pat in ('память/ИССЛЕДОВАНИЕ*.md','память/ЗАКОНЫ*.md','research/*.md','память/ПРОБ*.md'):
+          СРЕЗ=["в offline-режиме без внешнего API","на Windows без WSL","при 2 ГБ RAM","на CPU без GPU","для русского языка","для 10 параллельных агентов","в SQLite без сервера","при потоке 100 запросов в день","без единого API-ключа","в 2026 году"]
+          срез=СРЕЗ[(SLOT-1)%len(СРЕЗ)]
+          big=''
+          for pat in ('память/ИССЛЕДОВАНИЕ*.md','память/ПРОБ*.md','память/ЗАДАЧИ*.md','research/*.md'):
               for f in glob.glob(pat):
-                  try: big += open(f, encoding='utf-8', errors='ignore').read().lower() + '\n'
+                  try: big+=open(f,encoding='utf-8',errors='ignore').read().lower()+'\n'
                   except Exception: pass
-          stop = set()
+          stop=set()
           for f in glob.glob('флот100/реестр-запросов.json'):
               try:
-                  for x in json.load(open(f, encoding='utf-8')): stop.add(str(x).lower().strip())
+                  for x in json.load(open(f,encoding='utf-8')): stop.add(str(x).lower().strip())
               except Exception: pass
-          запросы = []
-          i = 0
-          while len(запросы) < N and i < 4000:
-              полоса, темы = ПОЛОСЫ[i % len(ПОЛОСЫ)]
-              шаблон = ШАБЛОН[(i // len(ПОЛОСЫ) + SLOT) % len(ШАБЛОН)]
-              тема = темы[(i // (len(ПОЛОСЫ) * len(ШАБЛОН)) + SLOT * 3) % len(темы)]
-              срез = СРЕЗ[(i // (len(ПОЛОСЫ) * len(ШАБЛОН) * len(темы)) + SLOT) % len(СРЕЗ)]
-              i += 1
-              q = шаблон.format(t=тема) + ' (' + срез + ')'
-              if тема.lower() in big: continue
-              if q.lower() in stop: continue
-              запросы.append(q)
-          шапка = ("Ты — агент флота памяти, слот A%d-S%d. Работа ТОЛЬКО над памятью ИИ-агента.\n\n"
-                   "ТВОЙ ПЕРСОНАЛЬНЫЙ ПЛАН — %d запросов, обрабатывай по порядку с #1:\n" % (ACC, SLOT, len(запросы)))
-          тело = "\n".join("%d. %s" % (k+1, q) for k, q in enumerate(запросы))
-          хвост = ("\n\nПРОТОКОЛ ОТВЕТА НА КАЖДЫЙ ЗАПРОС (7 пунктов, строго):\n"
+          запросы=[]; seen=set()
+          for tm in range(len(ШАБЛОН)):
+              for ti in range(16):
+                  for li in range(len(ПОЛОСЫ)):
+                      полоса,темы=ПОЛОСЫ[li]
+                      тема=темы[(ti+SLOT*5+li*3)%len(темы)]
+                      q=ШАБЛОН[(tm+SLOT)%len(ШАБЛОН)].format(t=тема)+' ('+срез+')'
+                      if тема.lower() in big: continue
+                      if q.lower() in stop or q.lower() in seen: continue
+                      seen.add(q.lower()); запросы.append(q)
+                      if len(запросы)>=N: break
+                  if len(запросы)>=N: break
+              if len(запросы)>=N: break
+          шапка=("Ты — агент флота памяти, слот A%d-S%d. Работа ТОЛЬКО над памятью ИИ-агента.\n\n"
+                 "ТВОЙ ПЕРСОНАЛЬНЫЙ ПЛАН — %d запросов, обрабатывай по порядку с #1:\n"%(ACC,SLOT,len(запросы)))
+          тело="\n".join("%d. %s"%(k+1,q) for k,q in enumerate(запросы))
+          хвост=("\n\nПРОТОКОЛ ОТВЕТА НА КАЖДЫЙ ЗАПРОС (7 пунктов, строго):\n"
            "1) что конкретно ломается в памяти агента сейчас;\n"
            "2) 2-3 лучших источника, прочитанных целиком;\n"
            "3) точные цитаты из них плюс прямые URL;\n"
@@ -83,8 +85,30 @@ jobs:
            "7) если готовое решение есть — внедри его, а не перескажи; свой большой движок не пиши.\n\n"
            "ПРАВИЛА: не повторяй запросы, которые уже видел в этом чате, бери новый угол; "
            "не выдумывай ссылки; free-first; отвечай по-русски, коротко, с цитатами.\n")
-          print(шапка + тело + хвост)
+          print(шапка+тело+хвост)
           PY
+          N=$(grep -c '^[0-9][0-9]*\.' "plan-${{ matrix.account }}-${{ matrix.agent }}.txt")
+          echo "запросов в плане: $N"
+          test "$N" -ge "$PLAN_N" || { echo "ПЛАН НЕПОЛНЫЙ: $N < $PLAN_N"; exit 1; }
+      - name: Свежие источники
+        run: |
+          python - <<'PY' > "src-${{ matrix.account }}-${{ matrix.agent }}.txt"
+          import re, sys
+          sys.path.insert(0,'fleet')
+          import seek
+          текст=open("plan-${{ matrix.account }}-${{ matrix.agent }}.txt",encoding='utf-8').read()
+          for q in re.findall(r'^\d+\.\s*(.+)$', текст, re.M)[:3]:
+              try:
+                  r=seek.искать(q)
+              except Exception as e:
+                  print('ЗАПРОС:',q,'\n  сбой поиска',str(e)[:80]); continue
+              print('ЗАПРОС:',q)
+              for h in (r['hits'] or [])[:4]:
+                  print(' -',(h.get('title') or '')[:110])
+                  print('   ',h.get('url'))
+                  print('   ',(h.get('snippet') or '')[:280])
+          PY
+          echo "источников собрано, байт: $(wc -c < "src-${{ matrix.account }}-${{ matrix.agent }}.txt")"
       - name: Вход в аккаунт и доставка задания в чат Arena
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
@@ -97,50 +121,48 @@ jobs:
           mkdir -p "аккаунты/.ФЛОТ-флот/память" && cp "память/АККАУНТЫ.json" "аккаунты/.ФЛОТ-флот/память/" || true
           python - <<'PY'
           import json, os, pathlib
-          n = int(os.environ['ACCOUNT_N'])
-          lst = []
-          f = pathlib.Path('память/АККАУНТЫ.json')
+          n=int(os.environ['ACCOUNT_N']); lst=[]
+          f=pathlib.Path('память/АККАУНТЫ.json')
           if f.exists():
-              for a in json.load(open(f, encoding='utf-8')):
-                  lst.append((a['email'], a['pass']))
-          f2 = pathlib.Path('аккаунты/АККАУНТЫ-НОВЫЕ.txt')
+              for a in json.load(open(f,encoding='utf-8')): lst.append((a['email'],a['pass']))
+          f2=pathlib.Path('аккаунты/АККАУНТЫ-НОВЫЕ.txt')
           if f2.exists():
-              for line in open(f2, encoding='utf-8-sig'):
-                  line = line.strip()
+              for line in open(f2,encoding='utf-8-sig'):
+                  line=line.strip()
                   if not line or line.startswith('#') or '@' not in line: continue
-                  em = line.split()[0]; pw = line[len(em):].strip().lstrip(';, ').strip()
-                  if pw: lst.append((em, pw))
-          seen = set(); uniq = []
-          for e, p in lst:
+                  em=line.split()[0]; pw=line[len(em):].strip().lstrip(';, ').strip()
+                  if pw: lst.append((em,pw))
+          seen=set(); uniq=[]
+          for e,p in lst:
               if e.lower() in seen: continue
-              seen.add(e.lower()); uniq.append((e, p))
+              seen.add(e.lower()); uniq.append((e,p))
           if not uniq: raise SystemExit('нет ни одного аккаунта')
-          em, pw = uniq[(n - 1) % len(uniq)]
-          pathlib.Path('/tmp/acct.txt').write_text(em + '\t' + pw, encoding='utf-8')
-          print('аккаунт #%d из %d' % (n, len(uniq)))
+          em,pw=uniq[(n-1)%len(uniq)]
+          pathlib.Path('/tmp/acct.txt').write_text(em+'\t'+pw,encoding='utf-8')
+          print('аккаунт #%d из %d'%(n,len(uniq)))
           PY
           EMAIL=$(cut -f1 /tmp/acct.txt)
-          python "аккаунты/ВОЙТИ.py" "$EMAIL" | tee /tmp/voiti.log
+          python "аккаунты/ВОЙТИ.py" "$EMAIL" 2>&1 | tee /tmp/voiti.log | grep -E "ВОШЕЛ|ВОШЁЛ|НЕТ ВХОДА|429|ИТОГ" || true
           python - <<'PY'
-          import json, glob, pathlib, base64
-          files = sorted(glob.glob('аккаунты/ВХОДЫ/*.json'))
-          if not files: raise SystemExit('сессия не создана — смотри /tmp/voiti.log')
-          rec = json.load(open(files[-1], encoding='utf-8'))
-          ck = rec.get('cookies') or {}
-          raw = (ck.get('arena-auth-prod-v1.0') or '') + (ck.get('arena-auth-prod-v1.1') or '')
+          import json, glob, pathlib
+          files=sorted(glob.glob('аккаунты/ВХОДЫ/*.json'))
+          if not files: raise SystemExit('сессия не создана — смотри лог входа')
+          rec=json.load(open(files[-1],encoding='utf-8'))
+          ck=rec.get('cookies') or {}
+          raw=(ck.get('arena-auth-prod-v1.0') or '')+(ck.get('arena-auth-prod-v1.1') or '')
           if not raw: raise SystemExit('нет cookie arena-auth')
-          state = {'cookies': [{'name': k, 'value': v, 'domain': '.arena.ai', 'path': '/', 'secure': True,
-                                 'httpOnly': True, 'sameSite': 'Lax'} for k, v in ck.items()], 'origins': []}
-          pathlib.Path('/tmp/state.json').write_text(json.dumps(state), encoding='utf-8')
-          pathlib.Path('/tmp/cookie.txt').write_text(raw, encoding='utf-8')
-          print('сессия готова, cookie %d символов' % len(raw))
+          state={'cookies':[{'name':k,'value':v,'domain':'.arena.ai','path':'/','secure':True,'httpOnly':True,'sameSite':'Lax'} for k,v in ck.items()],'origins':[]}
+          pathlib.Path('/tmp/state.json').write_text(json.dumps(state),encoding='utf-8')
+          pathlib.Path('/tmp/cookie.txt').write_text(raw,encoding='utf-8')
+          print('сессия готова, cookie %d символов'%len(raw))
           PY
           export ARENA_COOKIE="$(cat /tmp/cookie.txt)"
           export ARENA_STATE="$(python -c "import base64;print(base64.b64encode(open('/tmp/state.json','rb').read()).decode())")"
           export ACCOUNT="$(cut -f1 /tmp/acct.txt)"
           export TAG="A${{ matrix.account }}-S${{ matrix.agent }}"
-          export PROMPT="$(cat "plan-${{ matrix.account }}-${{ matrix.agent }}.txt")"
+          export PROMPT="$(cat "plan-${{ matrix.account }}-${{ matrix.agent }}.txt"; echo; echo '=== СВЕЖИЕ ИСТОЧНИКИ (проверь, дочитай, процитируй) ==='; cat "src-${{ matrix.account }}-${{ matrix.agent }}.txt")"
           python fleet/worker.py
+          echo "--- доставка:"; cat result-*.jsonl 2>/dev/null || echo "нет result.jsonl"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -148,4 +170,5 @@ jobs:
           path: |
             result-*.jsonl
             plan-*.txt
-          if-no-files-found: ignore
+            src-*.txt
+          if-no-files-found: ignore 
