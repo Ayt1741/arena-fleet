@@ -1,0 +1,151 @@
+name: fleet-memory-100
+on:
+  workflow_dispatch:
+    inputs:
+      goal:   {description: 'диалогов на агента', default: '1'}
+      pause:  {description: 'пауза между диалогами, с', default: '60'}
+      plan_n: {description: 'запросов в персональном плане', default: '100'}
+      dry:    {description: '1 = только проверка входа', default: '0'}
+jobs:
+  agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        account: [1,2,3,4,5,6,7,8,9,10]
+        agent:   [1,2,3,4,5,6,7,8,9,10]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Браузер
+        run: pip install -q playwright==1.64.1 && python -m playwright install --with-deps chromium
+      - name: Персональный план
+        env:
+          SLOT: ${{ matrix.agent }}
+          ACCOUNT_N: ${{ matrix.account }}
+          PLAN_N: ${{ inputs.plan_n }}
+        run: |
+          python - <<'PY' > "plan-${{ matrix.account }}-${{ matrix.agent }}.txt"
+          import os, glob, json
+          SLOT = int(os.environ['SLOT']); ACC = int(os.environ['ACCOUNT_N']); N = int(os.environ['PLAN_N'])
+          ПОЛОСЫ = [
+           ("семантика выдачи", ["hybrid retrieval bm25 dense reciprocal rank fusion","chunking long documents retrieval recall benchmark","colbert late interaction maxsim reranking","query expansion pseudo relevance feedback bm25"]),
+           ("масштаб индекса", ["sqlite vec exact knn performance many vectors","hnsw vs ivfflat recall latency tradeoff","incremental index update sqlite vector search","embedding reuse cache cost latency"]),
+           ("внешняя оценка", ["memeval locomo longmemeval memory benchmark","rusbeir ndcg retrieval russian evaluation","promptfoo deepeval rag faithfulness agent eval","ragas context precision recall memory evaluation"]),
+           ("место цитаты", ["chunk offsets exact source citation agent","grounded answer quote exact span retrieval","attribution verifiable claim memory provenance","citation tracking memory pipeline source"]),
+           ("правила и контекст", ["agents md instruction file context engineering limits","context compaction preserve requirements agent","prompt caching stable prefix cost latency","progressive disclosure context memory management"]),
+           ("детерминированный контроль", ["guardrail deterministic output validation agent","schema constrained decoding tool call validation","approval gate human in the loop agent tool","policy check tool invocation compliance agent"]),
+           ("оперативная память", ["scratchpad working memory agent session","short term buffer eviction policy agent memory","recency weighting retrieval recent turns","session state persistence agent restart"]),
+           ("извлечение знаний", ["fact extraction propositions memory agent","entity linking knowledge extraction llm","deduplication supersede versioning memory store","contradiction detection long term memory"]),
+           ("забывание", ["forgetting curve memory decay importance","temporal decay recency weighted retrieval","garbage collect stale memory agent","retention policy ttl knowledge base agent"]),
+           ("интеграция готовых проектов", ["graphiti temporal knowledge graph memory","mem0 open source memory layer agent","letta memgpt agent memory server","langmem storage agnostic memory primitives"])]
+          ШАБЛОН = ["Как устроено {t} и что конкретно взять из готовой открытой реализации?",
+           "Какие ограничения, лицензия и цена у лучшей готовой реализации по теме «{t}»?",
+           "Какая готовая реализация по теме «{t}» ставится на CPU и реально даёт прирост качества?",
+           "Есть ли готовые тесты и бенчмарки по теме «{t}», чтобы измерить эффект до и после?",
+           "Что известно о провалах и границах применимости по теме «{t}»?"]
+          СРЕЗ = ["в offline-режиме без внешнего API","на Windows без WSL","при 2 ГБ RAM","на CPU без GPU","для русского языка","для 10 параллельных агентов","в SQLite без сервера","при потоке 100 запросов в день","без единого API-ключа","в 2026 году"]
+          big = ''
+          for pat in ('память/ИССЛЕДОВАНИЕ*.md','память/ЗАКОНЫ*.md','research/*.md','память/ПРОБ*.md'):
+              for f in glob.glob(pat):
+                  try: big += open(f, encoding='utf-8', errors='ignore').read().lower() + '\n'
+                  except Exception: pass
+          stop = set()
+          for f in glob.glob('флот100/реестр-запросов.json'):
+              try:
+                  for x in json.load(open(f, encoding='utf-8')): stop.add(str(x).lower().strip())
+              except Exception: pass
+          запросы = []
+          i = 0
+          while len(запросы) < N and i < 4000:
+              полоса, темы = ПОЛОСЫ[i % len(ПОЛОСЫ)]
+              шаблон = ШАБЛОН[(i // len(ПОЛОСЫ) + SLOT) % len(ШАБЛОН)]
+              тема = темы[(i // (len(ПОЛОСЫ) * len(ШАБЛОН)) + SLOT * 3) % len(темы)]
+              срез = СРЕЗ[(i // (len(ПОЛОСЫ) * len(ШАБЛОН) * len(темы)) + SLOT) % len(СРЕЗ)]
+              i += 1
+              q = шаблон.format(t=тема) + ' (' + срез + ')'
+              if тема.lower() in big: continue
+              if q.lower() in stop: continue
+              запросы.append(q)
+          шапка = ("Ты — агент флота памяти, слот A%d-S%d. Работа ТОЛЬКО над памятью ИИ-агента.\n\n"
+                   "ТВОЙ ПЕРСОНАЛЬНЫЙ ПЛАН — %d запросов, обрабатывай по порядку с #1:\n" % (ACC, SLOT, len(запросы)))
+          тело = "\n".join("%d. %s" % (k+1, q) for k, q in enumerate(запросы))
+          хвост = ("\n\nПРОТОКОЛ ОТВЕТА НА КАЖДЫЙ ЗАПРОС (7 пунктов, строго):\n"
+           "1) что конкретно ломается в памяти агента сейчас;\n"
+           "2) 2-3 лучших источника, прочитанных целиком;\n"
+           "3) точные цитаты из них плюс прямые URL;\n"
+           "4) репозиторий, лицензия, ограничения (CPU/RAM/Windows/время установки);\n"
+           "5) как внедрять: файлы, таблицы, индексы, что меняется в выдаче;\n"
+           "6) как проверить: метрика до и после и команда замера;\n"
+           "7) если готовое решение есть — внедри его, а не перескажи; свой большой движок не пиши.\n\n"
+           "ПРАВИЛА: не повторяй запросы, которые уже видел в этом чате, бери новый угол; "
+           "не выдумывай ссылки; free-first; отвечай по-русски, коротко, с цитатами.\n")
+          print(шапка + тело + хвост)
+          PY
+      - name: Вход в аккаунт и доставка задания в чат Arena
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          ACCOUNT_N: ${{ matrix.account }}
+          GOAL: ${{ inputs.goal }}
+          PAUSE: ${{ inputs.pause }}
+          DRY: ${{ inputs.dry }}
+          CAPTCHA_WAIT: 600
+        run: |
+          mkdir -p "аккаунты/.ФЛОТ-флот/память" && cp "память/АККАУНТЫ.json" "аккаунты/.ФЛОТ-флот/память/" || true
+          python - <<'PY'
+          import json, os, pathlib
+          n = int(os.environ['ACCOUNT_N'])
+          lst = []
+          f = pathlib.Path('память/АККАУНТЫ.json')
+          if f.exists():
+              for a in json.load(open(f, encoding='utf-8')):
+                  lst.append((a['email'], a['pass']))
+          f2 = pathlib.Path('аккаунты/АККАУНТЫ-НОВЫЕ.txt')
+          if f2.exists():
+              for line in open(f2, encoding='utf-8-sig'):
+                  line = line.strip()
+                  if not line or line.startswith('#') or '@' not in line: continue
+                  em = line.split()[0]; pw = line[len(em):].strip().lstrip(';, ').strip()
+                  if pw: lst.append((em, pw))
+          seen = set(); uniq = []
+          for e, p in lst:
+              if e.lower() in seen: continue
+              seen.add(e.lower()); uniq.append((e, p))
+          if not uniq: raise SystemExit('нет ни одного аккаунта')
+          em, pw = uniq[(n - 1) % len(uniq)]
+          pathlib.Path('/tmp/acct.txt').write_text(em + '\t' + pw, encoding='utf-8')
+          print('аккаунт #%d из %d' % (n, len(uniq)))
+          PY
+          EMAIL=$(cut -f1 /tmp/acct.txt)
+          python "аккаунты/ВОЙТИ.py" "$EMAIL" | tee /tmp/voiti.log
+          python - <<'PY'
+          import json, glob, pathlib, base64
+          files = sorted(glob.glob('аккаунты/ВХОДЫ/*.json'))
+          if not files: raise SystemExit('сессия не создана — смотри /tmp/voiti.log')
+          rec = json.load(open(files[-1], encoding='utf-8'))
+          ck = rec.get('cookies') or {}
+          raw = (ck.get('arena-auth-prod-v1.0') or '') + (ck.get('arena-auth-prod-v1.1') or '')
+          if not raw: raise SystemExit('нет cookie arena-auth')
+          state = {'cookies': [{'name': k, 'value': v, 'domain': '.arena.ai', 'path': '/', 'secure': True,
+                                 'httpOnly': True, 'sameSite': 'Lax'} for k, v in ck.items()], 'origins': []}
+          pathlib.Path('/tmp/state.json').write_text(json.dumps(state), encoding='utf-8')
+          pathlib.Path('/tmp/cookie.txt').write_text(raw, encoding='utf-8')
+          print('сессия готова, cookie %d символов' % len(raw))
+          PY
+          export ARENA_COOKIE="$(cat /tmp/cookie.txt)"
+          export ARENA_STATE="$(python -c "import base64;print(base64.b64encode(open('/tmp/state.json','rb').read()).decode())")"
+          export ACCOUNT="$(cut -f1 /tmp/acct.txt)"
+          export TAG="A${{ matrix.account }}-S${{ matrix.agent }}"
+          export PROMPT="$(cat "plan-${{ matrix.account }}-${{ matrix.agent }}.txt")"
+          python fleet/worker.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: result-A${{ matrix.account }}-S${{ matrix.agent }}
+          path: |
+            result-*.jsonl
+            plan-*.txt
+          if-no-files-found: ignore
