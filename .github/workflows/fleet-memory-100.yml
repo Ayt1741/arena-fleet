@@ -1,23 +1,40 @@
 name: fleet-memory-100
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/fleet-memory-100.yml']
   workflow_dispatch:
     inputs:
-      chats:   {description: 'чатов (агентов) на один аккаунт, всего = 10 x chats', default: '10'}
-      msgs:    {description: 'сообщений в каждом чате', default: '2'}
+      chats:   {description: 'чатов на аккаунт', default: '10'}
+      msgs:    {description: 'сообщений в чате', default: '2'}
       plan_n:  {description: 'запросов в персональном плане', default: '100'}
       pause:   {description: 'пауза между сообщениями, с', default: '15'}
       wait_a:  {description: 'ждать ответ агента, с', default: '240'}
-      sources: {description: 'сколько свежих источников на запрос', default: '4'}
-      dry:     {description: '1 = только вход, без отправки', default: '0'}
+      sources: {description: 'свежих источников на запрос', default: '4'}
+      captcha: {description: 'ждать security verification, с', default: '300'}
+      dry:     {description: '1 = только вход', default: '0'}
+permissions:
+  contents: read
 jobs:
   agent:
+    name: 'agent A${{ matrix.account }}'
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       max-parallel: 10
       matrix:
         account: [1,2,3,4,5,6,7,8,9,10]
+    env:
+      ACCOUNT_N: ${{ matrix.account }}
+      CHATS: ${{ inputs.chats || '10' }}
+      MSGS: ${{ inputs.msgs || '2' }}
+      PLAN_N: ${{ inputs.plan_n || '100' }}
+      PAUSE: ${{ inputs.pause || '15' }}
+      WAIT_A: ${{ inputs.wait_a || '240' }}
+      NSRC: ${{ inputs.sources || '4' }}
+      CAPTCHA_WAIT: ${{ inputs.captcha || '300' }}
+      DRY: ${{ inputs.dry || '0' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,58 +42,58 @@ jobs:
       - name: Браузер
         run: pip install -q playwright==1.64.1 && python -m playwright install --with-deps chromium
       - name: Персональные планы
-        env:
-          ACCOUNT_N: ${{ matrix.account }}
-          PLAN_N: ${{ inputs.plan_n }}
         run: |
           python - <<'PY'
-          import os, glob, json
-          ACC = int(os.environ['ACCOUNT_N']); N = int(os.environ['PLAN_N'])
-          ПОЛОСЫ=[
-           ("семантика выдачи",["hybrid retrieval bm25 dense reciprocal rank fusion implementation","maximal marginal relevance diversification retrieval","colbert late interaction token level maxsim","cross encoder reranker latency recall tradeoff","query expansion pseudo relevance feedback bm25 russian","multi vector embeddings per chunk max pooling","sparse neural retrieval splade bm25 fusion production","chunk size overlap effect on recall long documents","contextual retrieval contextual prefix embedding","question to answer embedding matching chat history","idf weighting rare terms conversational logs","vector similarity threshold tuning memory search","reciprocal rank fusion versus score fusion hybrid","learning to rank model for memory retrieval","distribution based score fusion dbsf retrieval","semantic cache similarity threshold retrieval"]),
-           ("масштаб индекса",["sqlite vec exact knn performance million vectors","hnsw versus ivfflat recall latency tradeoff python","incremental index update vector search without rebuild","sqlite fts5 tokenizer unicode61 russian porter","sqlite wal concurrent readers single writer","parallel embedding batching sharding pipeline","embedding model quantization int8 footprint","model2vec static embeddings cpu speed benchmark","fastembed onnx cpu multilingual throughput","vector database index rebuild cost upsert","memory mapped index cold start latency","sqlite json1 storing chunk offsets metadata","chromadb hnsw persistence portability","postgres pgvector ivfflat hnsw limits","batch embedding rate limits api cost","sqlite vacuum index compaction performance"]),
-           ("внешняя оценка",["memeval locomo longmemeval memory benchmark harness","rusbeir ndcg recall russian retrieval evaluation","promptfoo local llm eval compare two systems","deepeval rag faithfulness contextual precision recall","ragas context precision recall evaluation python","hit rate versus recall at k definition","mrr ndcg calculation from ranked list python","longmemeval knowledge update temporal questions","memoryagentbench tool use memory tasks suite","locomo multi session conversation question dataset","regression harness retrieval quality snapshot tests","ablation study retrieval configuration significance","llm as judge reliability bias evaluation","test contamination retrieval benchmark","error taxonomy retrieval false negative positive","benchmark reproduction docker runtime budget"]),
-           ("место цитаты",["chunk offsets character span exact citation","grounded answer verbatim quote evidence","provenance tracking source url memory fact","attribution verification claim to source mapping","context clipping citation truncation handling","quote extraction html details cleanup","source deduplication canonical url normalization","evidence ranking versus answer ranking","citation precision recall answer grounding","document versioning stale citation invalidation","unicode byte offsets python slicing russian","markdown table extraction into memory chunk","html boilerplate removal before embedding","citation link format requirement agent","traceability audit trail requirement answer","snippet versus full chunk context budget"]),
-           ("правила и контекст",["agents md instruction hierarchy context budget","context compaction preserving constraints summary","prompt caching stable prefix breakpoint","progressive disclosure context memory layers","system prompt versus project instructions precedence","token budget allocation system user retrieved","instruction file length limit best practices","context rot long conversation degradation","skill progressive loading tool description tokens","rules file duplication across agents consistency","rag context ordering most relevant last","context poisoning via retrieved documents","memory of negative instructions do not list","session summary merge strategy compaction","retrieval interleaving with instructions priority","token count characters russian ratio"]),
-           ("детерминированный контроль",["guardrail deterministic output validation memory","schema constrained decoding json tool call","approval gate human in the loop action","policy check tool invocation compliance","append only audit log hash chain tamper evidence","merkle tree append only log verification","guard input sanitization prompt injection memory","quarantine flag record until reviewed","input validation rules engine python agent","contract test memory write and retrieval","deterministic replay agent run debugging","idempotent memory write upsert semantics","circuit breaker memory subsystem failure","validation errors retry strategy agent loop","gitleaks secret scanning memory pipeline","unit tests retrieval ranking stability"]),
-           ("оперативная память",["scratchpad working memory ephemeral session","short term buffer eviction policy memory","recency weighting retrieval recent turns","session state persistence across restarts","hot cache in memory layer lru design","message queue asynchronous memory writes","memory write batching latency throughput","event sourced agent conversation log","conversation window sliding recent turns","tool result caching within session","long running task checkpoint resume agent","memory pressure backpressure queue limits","per user namespace isolation memory","ttl expiry entries garbage collection","ephemeral versus durable memory separation","hot path memory access latency budget"]),
-           ("извлечение знаний",["fact extraction propositions structured memory","entity linking knowledge extraction llm","deduplication near duplicate detection semantic","supersede versioning knowledge store update","contradiction detection conflicting facts memory","bitemporal valid time transaction time","knowledge update tests memory benchmark","structured output facts confidence score","canonicalization entity resolution merge records","extraction quality precision recall facts","atomic statements nested fact granularity","context dependent facts qualifiers storage","user preference extraction explicit implicit","ontology schema memory fact types","extraction cost tokens per message memory","passive versus active knowledge capture"]),
-           ("забывание",["forgetting curve memory decay importance","temporal decay recency weighted formula","garbage collection stale memory retention","ttl knowledge base expiration semantics","access frequency retention utility score","forgetting as feature agent memory design","consolidation merging memories into summaries","summary drift after repeated consolidation","memory bloat growth pruning over time","importance decay redundancy penalty","episodic semantic distinction forgetting rules","retention of critical instructions never forget","user requested forget right to erasure","staleness detection outdated facts agent","conflict resolution freshest wins wrong case","memory diet audit unused entries"]),
-           ("интеграция готовых проектов",["graphiti temporal knowledge graph open source","mem0 open source memory layer agent","letta memgpt agent memory server","langmem storage agnostic memory primitives","zep temporal knowledge graph managed versus oss","cognee knowledge graph memory ingestion","mcp memory server protocol agent","openhands memory plugin open source","memary open source memory agent","elasticsearch hybrid retrieval bm25 vector official","opensearch hybrid search neural sparse plugin","sqlite lancedb embedded vector database","chroma persist client embedding function","redis vector search official support","weaviate hybrid search bm25 vector official","llamaindex memory workflow persistence"])]
-          ШАБЛОН=["Как устроено {t} и что конкретно взять из готовой открытой реализации?",
-           "Какие ограничения, лицензия и цена у лучшей готовой реализации по теме «{t}»?",
-           "Какая готовая реализация по теме «{t}» ставится на CPU и даёт прирост качества?",
-           "Есть ли готовые тесты и бенчмарки по теме «{t}», чтобы измерить эффект до и после?",
-           "Что известно о провалах и границах применимости по теме «{t}»?"]
-          СРЕЗ=["в offline-режиме без внешнего API","на Windows без WSL","при 2 ГБ RAM","на CPU без GPU","для русского языка","для 10 параллельных агентов","в SQLite без сервера","при потоке 100 запросов в день","без единого API-ключа","в 2026 году"]
-          СРЕЗ2=["в одном процессе с SQL","с нулевыми GPU и 1 vCPU","на одной машине с 10 агентами","в одной таблице SQLite","за 60 секунд на запрос","при 10 ГБ RAM","в Docker без systemd","на Windows 11","в полностью локальном контуре","на Python 3.11 без ML-пакетов"]
-          big=''
-          for pat in ('память/ИССЛЕДОВАНИЕ*.md','память/ЗАДАЧИ*.md','research/*.md'):
-              for f in glob.glob(pat):
-                  try: big+=open(f,encoding='utf-8',errors='ignore').read().lower()+'\n'
-                  except Exception: pass
+          import os, json, urllib.request, re, ast, glob
+          ACC=int(os.environ['ACCOUNT_N']); N=int(os.environ['PLAN_N'])
+          SRC='https://raw.githubusercontent.com/Ayt1741/arena-fleet/ca925b2a033076c4bea05ace95c4da90678f7700/.github/workflows/fleet-memory-100.yml'
+          txt=urllib.request.urlopen(SRC, timeout=45).read().decode('utf-8')
+          def список(имя):
+              m=re.search(r'^\s*%s\s*=\s*(\[.*?\])\s*$'%имя, txt, re.S|re.M)
+              if not m: raise SystemExit('не нашёл список '+имя)
+              return ast.literal_eval(m.group(1))
+          ПОЛОСЫ=список('ПОЛОСЫ'); ШАБЛОН=список('ШАБЛОН'); СРЕЗ=список('СРЕЗ'); СРЕЗ2=список('СРЕЗ2')
+          print('пул: полос %d, шаблонов %d, срезов %d'%(len(ПОЛОСЫ),len(ШАБЛОН),len(СРЕЗ)))
           stop=set()
-          for f in glob.glob('флот100/реестр-запросов.json'):
+          for f in ('fleet/queries-52.txt','fleet/queries-53.txt'):
               try:
-                  for x in json.load(open(f,encoding='utf-8')): stop.add(str(x).lower().strip())
+                  for line in open(f,encoding='utf-8'):
+                      line=line.strip().lower()
+                      if len(line)>12: stop.add(line)
               except Exception: pass
-          def собрать(SLOT, use_big):
+          for f in glob.glob('fleet/probe_tasks.json'):
+              try:
+                  def walk(o):
+                      if isinstance(o,str):
+                          if len(o)>12: stop.add(o.strip().lower())
+                      elif isinstance(o,dict):
+                          for x in o.values(): walk(x)
+                      elif isinstance(o,list):
+                          for x in o: walk(x)
+                  walk(json.load(open(f,encoding='utf-8')))
+              except Exception: pass
+          print('исторических запросов в стоп-листе: %d'%len(stop))
+          def повтор(тема):
+              t=тема.lower().strip()
+              for h in stop:
+                  if h in t or t in h: return True
+              return False
+          def собрать(SLOT):
               запросы=[]; seen=set()
               срез=СРЕЗ[(SLOT-1)%len(СРЕЗ)]+' и '+СРЕЗ2[(ACC-1)%len(СРЕЗ2)]
               for tm in range(len(ШАБЛОН)):
                   for ti in range(16):
                       for li in range(len(ПОЛОСЫ)):
-                          полоса,темы=ПОЛОСЫ[li]
+                          темы=ПОЛОСЫ[li][1]
                           тема=темы[(ti+SLOT*5+li*3)%len(темы)]
+                          if повтор(тема): continue
                           q=ШАБЛОН[(tm+SLOT+ACC)%len(ШАБЛОН)].format(t=тема)+' ('+срез+')'
-                          if use_big and тема.lower() in big: continue
-                          if q.lower() in stop or q.lower() in seen: continue
+                          if q.lower() in seen: continue
                           seen.add(q.lower()); запросы.append(q)
                           if len(запросы)>=N: return запросы
               return запросы
           for SLOT in range(1,11):
-              запросы=собрать(SLOT,True)
-              if len(запросы)<N: запросы=собрать(SLOT,False)
+              запросы=собрать(SLOT)
               if len(запросы)<N: raise SystemExit('ПЛАН НЕПОЛНЫЙ %d < %d'%(len(запросы),N))
               шапка=("Ты — агент флота памяти, слот A%d-S%d. Работа ТОЛЬКО над памятью ИИ-агента.\n\n"
                      "ТВОЙ ПЕРСОНАЛЬНЫЙ ПЛАН — %d запросов, обрабатывай по порядку с #1:\n"%(ACC,SLOT,len(запросы)))
@@ -92,11 +109,9 @@ jobs:
                "ПРАВИЛА: не повторяй запросы, которые уже видел в этом чате, бери новый угол; "
                "не выдумывай ссылки; free-first; отвечай по-русски, коротко, с цитатами.\n")
               open('plan-%d-%d.txt'%(ACC,SLOT),'w',encoding='utf-8').write(шапка+тело+хвост)
-          print('планы готовы: 10 файлов по %d запросов'%N)
+          print('планы готовы: 10 x %d запросов'%N)
           PY
       - name: Вход в аккаунт
-        env:
-          ACCOUNT_N: ${{ matrix.account }}
         run: |
           python - <<'PY'
           import json, os, pathlib, importlib.util, hashlib
@@ -134,13 +149,6 @@ jobs:
           PY
       - name: Доставка в чаты Arena и проверка ответа
         env:
-          ACCOUNT_N: ${{ matrix.account }}
-          CHATS: ${{ inputs.chats }}
-          MSGS: ${{ inputs.msgs }}
-          PAUSE: ${{ inputs.pause }}
-          WAIT_A: ${{ inputs.wait_a }}
-          NSRC: ${{ inputs.sources }}
-          DRY: ${{ inputs.dry }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: |
           python - <<'PY'
@@ -152,7 +160,7 @@ jobs:
           COOKIES=A['cookies']; TOKEN=A['token']
           ACC=int(os.environ['ACCOUNT_N']); CHATS=int(os.environ['CHATS']); MSGS=int(os.environ['MSGS'])
           PAUSE=int(os.environ['PAUSE']); WAIT=int(os.environ['WAIT_A']); NSRC=int(os.environ['NSRC'])
-          DRY=os.environ.get('DRY','0')=='1'
+          CH_ALL=int(os.environ.get('CAPTCHA_WAIT','300')); DRY=os.environ.get('DRY','0')=='1'
           TAG='A%d'%ACC
           OUT=pathlib.Path('result-%s.jsonl'%TAG)
           SHOTS=pathlib.Path('shots'); SHOTS.mkdir(exist_ok=True)
@@ -182,11 +190,19 @@ jobs:
             return toDataURL.apply(this, arguments);
           };
           """
+          def esc(s):
+              return str(s).replace('%','%25').replace('\r','%0D').replace('\n','%0A')
           def log(rec):
               rec.update(ts=int(time.time()), iso=time.strftime('%H:%M:%S'), tag=TAG)
               with open(OUT,'a',encoding='utf-8') as f:
                   f.write(json.dumps(rec,ensure_ascii=False)+'\n')
               print(json.dumps(rec,ensure_ascii=False),flush=True)
+          def ошибка(tag, текст):
+              try: pathlib.Path('diag-%s.txt'%tag).write_text(текст, encoding='utf-8')
+              except Exception: pass
+              print('::error title=сбой %s::%s'%(tag, esc(текст)), flush=True)
+          def note(tag, текст):
+              print('::notice title=%s::%s'%(tag, esc(текст)), flush=True)
           def план(agent):
               txt=pathlib.Path('plan-%d-%d.txt'%(ACC,agent)).read_text(encoding='utf-8')
               return [m.group(2).strip() for m in re.finditer(r'^(\d+)\.\s*(.+)$',txt,re.M)]
@@ -206,25 +222,110 @@ jobs:
                 let j={}; try{ j=await r.json(); }catch(e){}
                 return {status:r.status, entries:(j.entries||j.history||[]), keys:Object.keys(j||{})};
               }""",path)
+          async def challenge_on(pg):
+              try:
+                  txt=await pg.inner_text('body')
+                  t=txt.lower()
+                  return ('security verification' in t) or ('verify you are human' in t) or ('checking your browser' in t) or ('just a moment' in t) or (await pg.locator('#challenge-form').count()>0)
+              except Exception:
+                  return False
+          async def селекторы(pg):
+              out=[]
+              for sel in ('textarea','[contenteditable="true"]','div[role="textbox"]','input[type="text"]','#challenge-form','iframe'):
+                  try: n=await pg.locator(sel).count()
+                  except Exception: n=-1
+                  out.append('%s=%d'%(sel,n))
+              return ' '.join(out)
+          async def поле(pg):
+              for sel in ('textarea','[contenteditable="true"]','div[role="textbox"]','input[type="text"]'):
+                  try:
+                      loc=pg.locator(sel).first
+                      if await loc.count()>0 and await loc.is_visible():
+                          return sel, loc
+                  except Exception:
+                      continue
+              return None, None
+          async def открыть_текст(pg):
+              await pg.goto('https://arena.ai/text', wait_until='domcontentloaded', timeout=90000)
+              await pg.wait_for_timeout(3500)
+              if await challenge_on(pg):
+                  log({'event':'challenge','wait':CH_ALL})
+                  note(TAG,'капча: security verification, жду до %d с'%CH_ALL)
+                  t0=time.time()
+                  while time.time()-t0<CH_ALL:
+                      await pg.wait_for_timeout(5000)
+                      try:
+                          await pg.reload(wait_until='domcontentloaded', timeout=90000)
+                          await pg.wait_for_timeout(3000)
+                      except Exception:
+                          pass
+                      if not await challenge_on(pg):
+                          break
+                  if await challenge_on(pg):
+                      return False
+              return True
+          async def диагностика(pg,tag):
+              body=''
+              try:
+                  html=await pg.content()
+                  pathlib.Path('diag-%s.html'%tag).write_text(html[:300000], encoding='utf-8')
+              except Exception: pass
+              try:
+                  await pg.screenshot(path='diag-%s.png'%tag, full_page=True)
+              except Exception: pass
+              try:
+                  body=await pg.inner_text('body')
+                  pathlib.Path('diag-%s.txt'%tag).write_text(body[:6000], encoding='utf-8')
+              except Exception: pass
+              return body
+          async def ввести(pg,box,sel,текст):
+              await box.click(timeout=20000)
+              if sel in ('textarea','input[type="text"]'):
+                  await box.fill(текст)
+                  await pg.wait_for_timeout(400)
+                  try:
+                      if (await box.input_value())!=текст:
+                          await box.fill('')
+                          await pg.keyboard.type(текст, delay=2)
+                  except Exception: pass
+              else:
+                  await pg.keyboard.type(текст, delay=2)
+              return True
           async def main():
               state={'cookies':[{'name':k,'value':v,'domain':'.arena.ai','path':'/','secure':True,'httpOnly':True,'sameSite':'Lax'} for k,v in COOKIES.items()],'origins':[]}
               async with async_playwright() as p:
                   b=await p.chromium.launch(headless=True,args=['--no-sandbox','--disable-dev-shm-usage','--disable-blink-features=AutomationControlled'])
-                  ctx=await b.new_context(user_agent=UA,locale='ru-RU',timezone_id='Europe/Moscow',
-                                          viewport={'width':1440,'height':900},storage_state=state,
-                                          extra_http_headers={'Authorization':'Bearer '+TOKEN})
-                  await ctx.add_init_script(STEALTH%(4,8,random.randint(1,250)))
-                  pg=await ctx.new_page()
-                  await pg.goto('https://arena.ai/text',wait_until='domcontentloaded',timeout=90000)
-                  await pg.wait_for_timeout(4000)
-                  me=(await api(pg,'/api/me'))['status']
-                  log({'event':'start','me':me,'dry':DRY,'chats':CHATS,'msgs':MSGS,'token_len':len(TOKEN)})
-                  if me!=200:
-                      log({'event':'fatal','why':'api/me != 200 (вход не подтверждён)'})
-                      await b.close(); raise SystemExit(3)
+                  ctx=pg=None; me=None; sel=None; box=None; challenge=False
+                  for auth in (True, False):
+                      if ctx is not None:
+                          try: await ctx.close()
+                          except Exception: pass
+                      extra={'Authorization':'Bearer '+TOKEN} if auth else {}
+                      ctx=await b.new_context(user_agent=UA,locale='ru-RU',timezone_id='Europe/Moscow',
+                                              viewport={'width':1440,'height':900},storage_state=state,
+                                              extra_http_headers=extra)
+                      await ctx.add_init_script(STEALTH%(4,8,random.randint(1,250)))
+                      pg=await ctx.new_page()
+                      ok_page=await открыть_текст(pg)
+                      challenge = challenge or (not ok_page)
+                      me=(await api(pg,'/api/me'))['status']
+                      sel,box=await поле(pg)
+                      log({'event':'probe','auth':auth,'me':me,'field':sel,'challenge':not ok_page,'url':pg.url})
+                      note(TAG,'probe auth=%s me=%s поле=%s капча=%s'%(auth,me,sel,not ok_page))
+                      if box is not None:
+                          break
+                  if box is None:
+                      body=await диагностика(pg,TAG)
+                      title=''
+                      try: title=await pg.title()
+                      except Exception: pass
+                      ошибка(TAG,'нет поля ввода | me=%s | капча=%s | url=%s | title=%s | %s | стр: %s'%(me,challenge,pg.url[:60],title[:40],await селекторы(pg),(body or '')[:120].replace('\n',' ')))
+                      await b.close(); raise SystemExit(1)
                   if DRY:
-                      log({'event':'dry_ok'}); await b.close(); return
-                  итог=[]
+                      log({'event':'dry_ok','me':me,'field':sel})
+                      note(TAG,'dry ok me=%s поле=%s'%(me,sel))
+                      await b.close(); return
+                  итог=[]; smoke=False
                   for agent in range(1,CHATS+1):
                       qs=план(agent)
                       for k in range(MSGS):
@@ -249,43 +350,59 @@ jobs:
                                "7) если готовое решение есть — внедри его, а не перескажи; свой большой движок не пиши.\n\n"
                                "ПРАВИЛА: отвечай по-русски, коротко, с цитатами и прямыми URL; не выдумывай ссылки.\n"
                                "МЕТКА: %s (в ответе метку не повторяй)"%marker)
-                          before={e.get('id') for e in (await api(pg,'/api/history/unified?limit=20&includeArchived=false'))['entries']}
-                          await pg.goto('https://arena.ai/text',wait_until='domcontentloaded',timeout=90000)
-                          await pg.wait_for_timeout(3500)
-                          box=pg.locator('textarea').first
-                          await box.click(timeout=30000)
-                          await box.fill(msg)
-                          await pg.wait_for_timeout(700)
                           try:
-                              if (await box.input_value())!=msg:
-                                  await box.fill(''); await pg.keyboard.type(msg,delay=4)
-                          except Exception: pass
-                          await box.press('Enter')
-                          ans=''; link=None; t0=time.time()
-                          while time.time()-t0<WAIT:
-                              await pg.wait_for_timeout(4000)
-                              try: body=await pg.inner_text('body')
-                              except Exception: body=''
-                              cands=[body[i+len(marker):] for i in [m.start() for m in re.finditer(re.escape(marker),body)]]
-                              if cands:
-                                  best=max(cands,key=len)
-                                  if len(best.strip())>=120: ans=best
-                              h=await api(pg,'/api/history/unified?limit=20&includeArchived=false')
-                              new=[e for e in h['entries'] if e.get('id') not in before]
-                              if new and link is None: link='https://arena.ai/c/%s'%new[-1].get('id')
-                              if ans and link: break
-                          urls=sorted(set(URL_RE.findall(ans)))
-                          kw=[w for w in ('цитат','url','лиценз','внедр','метрик','источник','ограничен') if w in ans.lower()]
-                          ok=bool(ans.strip()) and len(urls)>=2
-                          try: await pg.screenshot(path=str(SHOTS/('A%d-S%02d-%d.png'%(ACC,agent,k))))
-                          except Exception: pass
-                          log({'event':'chat','agent':agent,'k':k,'msg_chars':len(msg),'answer_chars':len(ans.strip()),
-                               'n_urls':len(urls),'urls':urls[:6],'kw':kw,'link':link,'ok':ok,'head':ans.strip()[:180]})
-                          итог.append(ok)
-                          await pg.wait_for_timeout(PAUSE*1000)
+                              before={e.get('id') for e in (await api(pg,'/api/history/unified?limit=20&includeArchived=false'))['entries']}
+                              if not await открыть_текст(pg):
+                                  body=await диагностика(pg,TAG)
+                                  ошибка(TAG,'капча не пройдена за %d с | %s | стр: %s'%(CH_ALL,await селекторы(pg),(body or '')[:120].replace('\n',' ')))
+                                  raise SystemExit(3)
+                              sel2,box2=await поле(pg)
+                              if box2 is None:
+                                  body=await диагностика(pg,TAG)
+                                  ошибка(TAG,'поле пропало перед отправкой | %s | стр: %s'%(await селекторы(pg),(body or '')[:120].replace('\n',' ')))
+                                  raise SystemExit(1)
+                              await ввести(pg,box2,sel2,msg)
+                              await pg.wait_for_timeout(700)
+                              await box2.press('Enter')
+                              ans=''; link=None; t0=time.time()
+                              while time.time()-t0<WAIT:
+                                  await pg.wait_for_timeout(4000)
+                                  try: body=await pg.inner_text('body')
+                                  except Exception: body=''
+                                  cands=[body[i+len(marker):] for i in [m.start() for m in re.finditer(re.escape(marker),body)]]
+                                  if cands:
+                                      best=max(cands,key=len)
+                                      if len(best.strip())>=120: ans=best
+                                  h=await api(pg,'/api/history/unified?limit=20&includeArchived=false')
+                                  new=[e for e in h['entries'] if e.get('id') not in before]
+                                  if new and link is None: link='https://arena.ai/c/%s'%new[-1].get('id')
+                                  if ans and link: break
+                              urls=sorted(set(URL_RE.findall(ans)))
+                              kw=[w for w in ('цитат','url','лиценз','внедр','метрик','источник','ограничен') if w in ans.lower()]
+                              ok=bool(ans.strip()) and len(urls)>=2
+                              try: await pg.screenshot(path=str(SHOTS/('A%d-S%02d-%d.png'%(ACC,agent,k))))
+                              except Exception: pass
+                              log({'event':'chat','agent':agent,'k':k,'msg_chars':len(msg),'answer_chars':len(ans.strip()),
+                                   'n_urls':len(urls),'urls':urls[:6],'kw':kw,'link':link,'ok':ok,'head':ans.strip()[:180]})
+                              if not smoke:
+                                  smoke=True
+                                  note(TAG,'smoke чат %d-%d ok=%s urls=%d link=%s'%(agent,k,ok,len(urls),link))
+                                  if not ok:
+                                      ошибка(TAG,'smoke не прошёл: ответ %d симв., url %d, link=%s'%(len(ans.strip()),len(urls),link))
+                                      await b.close(); raise SystemExit(2)
+                                  note(TAG,'smoke зелёный, иду дальше: %d чатов x %d сообщений'%(CHATS,MSGS))
+                              итог.append(ok)
+                              await pg.wait_for_timeout(PAUSE*1000)
+                          except SystemExit:
+                              raise
+                          except Exception as e:
+                              body=await диагностика(pg,TAG)
+                              ошибка(TAG,'исключение: %s | url=%s | стр: %s'%(repr(e)[:200],pg.url[:60],(body or '')[:100].replace('\n',' ')))
+                              raise
                   summ={'account':ACC,'chats':len(итог),'ok':sum(1 for x in итог if x),'ts':time.strftime('%Y-%m-%d %H:%M:%S')}
                   pathlib.Path('summary-%s.json'%TAG).write_text(json.dumps(summ,ensure_ascii=False,indent=1),encoding='utf-8')
                   log({'event':'finish',**summ})
+                  note(TAG,'ИТОГ %s: ok=%d из %d чатов'%(TAG,summ['ok'],summ['chats']))
                   await b.close()
                   if summ['ok']<summ['chats']:
                       raise SystemExit('ГЕЙТ НЕ ПРОЙДЕН: %d из %d чатов'%(summ['ok'],summ['chats']))
@@ -293,7 +410,18 @@ jobs:
           PY
       - name: Итог
         if: always()
-        run: cat summary-*.json 2>/dev/null || echo 'итога нет'
+        run: |
+          cat summary-*.json 2>/dev/null || echo 'итога нет'
+          python - <<'PY'
+          import glob, json
+          fs=sorted(glob.glob('summary-*.json'))
+          if not fs:
+              print('::notice title=итог::сводки нет (шаг доставки упал раньше)')
+          for f in fs:
+              d=json.load(open(f,encoding='utf-8'))
+              s=json.dumps(d,ensure_ascii=False).replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+              print('::notice title=итог %s::%s'%(f,s))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -302,5 +430,8 @@ jobs:
             result-*.jsonl
             plan-*.txt
             summary-*.json
+            diag-*.txt
+            diag-*.html
+            diag-*.png
             shots/
           if-no-files-found: ignore
